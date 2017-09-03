@@ -2,9 +2,8 @@
 #include "Entity.h"
 
 // Default constructor.
-Entity::Entity() :
-m_currentTextureIndex(static_cast<int>(ANIMATION_STATE::WALK_DOWN)),
-m_velocity({0.f, 0.f})
+Entity::Entity() : Object(),
+m_currentTextureIndex(static_cast<int>(ANIMATION_STATE::WALK_DOWN))
 {
 	AddComponent<C_Health>();
 	AddComponent<C_Attack>();
@@ -23,11 +22,13 @@ void Entity::Update(float timeDelta)
 	// Choose animation state.
 	ANIMATION_STATE animState = static_cast<ANIMATION_STATE>(m_currentTextureIndex);
 
-	if ((m_velocity.x != 0) || (m_velocity.y != 0))
+	const sf::Vector2f& velocity = GetComponent<C_Pathfinding>()->GetVelocity();
+
+	if ((velocity.x != 0) || (velocity.y != 0))
 	{
-		if (abs(m_velocity.x) > abs(m_velocity.y))
+		if (abs(velocity.x) > abs(velocity.y))
 		{
-			if (m_velocity.x <= 0)
+			if (velocity.x <= 0)
 			{
 				animState = ANIMATION_STATE::WALK_LEFT;
 			}
@@ -38,7 +39,7 @@ void Entity::Update(float timeDelta)
 		}
 		else
 		{
-			if (m_velocity.y <= 0)
+			if (velocity.y <= 0)
 			{
 				animState = ANIMATION_STATE::WALK_UP;
 			}
@@ -49,10 +50,10 @@ void Entity::Update(float timeDelta)
 		}
 	}
 
-	auto sprite = GetComponent<C_Sprite>();
+	auto sprite = GetComponent<C_AnimatedSprite>();
 
 	// Set animation speed.
-	if ((m_velocity.x == 0) && (m_velocity.y == 0))
+	if ((velocity.x == 0) && (velocity.y == 0))
 	{
 		// The character is still.
 		if (sprite->IsAnimated())

@@ -11,9 +11,9 @@
 #ifndef HUMANOID_H
 #define HUMANOID_H
 
-#include "Enemy.h"
+#include "Entity.h"
 
-class Humanoid : public Enemy
+class Humanoid : public Entity
 {
 public:
 

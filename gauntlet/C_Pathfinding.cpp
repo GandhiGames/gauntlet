@@ -16,6 +16,7 @@ m_velocity({ 0.f, 0.f })
 C_Pathfinding::~C_Pathfinding()
 {
 }
+
 void C_Pathfinding::Update(float deltaTime)
 {
 	sf::Vector2f* targetLocation = GetNextPosition();
@@ -46,6 +47,12 @@ void C_Pathfinding::Update(float deltaTime)
 void C_Pathfinding::LoadDependencies(Object* owner)
 {
 	m_transform = owner->m_transform;
+}
+
+//TODO: move to a C_Moveable component? Have transform own velocity?
+const sf::Vector2f& C_Pathfinding::GetVelocity() const
+{
+	return m_velocity;
 }
 
 void C_Pathfinding::Calculate(Level& level, sf::Vector2f target)

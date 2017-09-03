@@ -3,12 +3,12 @@
 
 // Constructor.
 Player::Player() :
-m_attackDelta(0.f),
 m_manaDelta(0.f),
-m_isAttacking(false),
 m_statPoints(0)
 {
-	AddComponent<C_Sprite>();
+	AddComponent<C_AudioListener>();
+
+	auto sprite = AddComponent<C_AnimatedSprite>();
 
 	// Generate a random class.
 	m_class = static_cast<PLAYER_CLASS>(std::rand() % static_cast<int>(PLAYER_CLASS::COUNT));
@@ -55,7 +55,6 @@ m_statPoints(0)
 	m_textureIDs[static_cast<int>(ANIMATION_STATE::IDLE_LEFT)] = TextureManager::AddTexture("../resources/players/" + className + "/spr_" + className + "_idle_left.png");
 
 	// Set initial sprite.
-	auto sprite = GetComponent<C_Sprite>();
 	sprite->SetSprite(TextureManager::GetTexture(m_textureIDs[static_cast<int>(ANIMATION_STATE::WALK_UP)]), false, 8, 12);
 	m_currentTextureIndex = static_cast<int>(ANIMATION_STATE::WALK_UP);
 	sprite->GetSprite().setOrigin(sf::Vector2f(13.f, 18.f));
@@ -163,7 +162,7 @@ void Player::Update(float timeDelta, Level& level)
 
 
 	//TODO: cache call to getcomponent.
-	auto sprite = GetComponent<C_Sprite>();
+	auto sprite = GetComponent<C_AnimatedSprite>();
 
 	// Set the sprite.
 	if (m_currentTextureIndex != static_cast<int>(animState))
@@ -201,17 +200,6 @@ void Player::Update(float timeDelta, Level& level)
 			sprite->SetAnimated(true);
 		}
 	}
-
-	// Check if shooting.
-	if ((m_attackDelta += timeDelta) > 0.25f)
-	{
-		if (Input::IsKeyPressed(Input::KEY::KEY_ATTACK))
-		{
-			// Mark player as attacking.
-			m_isAttacking = true;
-		}
-	}
-
 
 	if ((m_manaDelta += timeDelta) > 0.20)
 	{
@@ -291,22 +279,6 @@ int Player::GetTraitCount() const
 {
 	return PLAYER_TRAIT_COUNT;
 }
-
-// Checks if the player is attacking.
-bool Player::IsAttacking()
-{
-	if (m_isAttacking)
-	{
-		m_isAttacking = false;
-		m_attackDelta = 0.f;
-		return true;
-	}
-	else
-	{
-		return false;
-	}
-}
-
 
 // Checks is the given movement will result in a collision.
 bool Player::CausesCollision(sf::Vector2f movement, Level& level)

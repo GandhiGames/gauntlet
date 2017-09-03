@@ -54,12 +54,6 @@ public:
 	 */
 	PLAYER_CLASS GetClass() const;
 
-	/**
-	 * Checks if the player is currently attacking.
-	 * @return True if the player is attacking.
-	 */
-	bool IsAttacking();
-
 private:
 
 	/**
@@ -89,20 +83,13 @@ private:
 	 */
 	PLAYER_CLASS m_class;
 
-	/**
-	 * The time since the player's last attack.
-	 */
-	float m_attackDelta;
+	
 
 	/**
 	 * The time since the last mana regeneration.
 	 */
 	float m_manaDelta;
 
-	/**
-	 * Is the player attacking.
-	 */
-	bool m_isAttacking;
 
 	/**
 	* The number of stat points the entities has to distribute.

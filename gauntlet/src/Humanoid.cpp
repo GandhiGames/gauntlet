@@ -10,8 +10,8 @@ Humanoid::Humanoid()
 void Humanoid::Update(float timeDelta)
 {
 	// Call parent functionality.
-	Enemy::Update(timeDelta);
+	Entity::Update(timeDelta);
 
 	// Update the texture with our custom textures.
-	GetComponent<C_Sprite>()->GetSprite().setTexture(m_textures[m_currentTextureIndex]);
+	GetComponent<C_AnimatedSprite>()->GetSprite().setTexture(m_textures[m_currentTextureIndex]);
 }

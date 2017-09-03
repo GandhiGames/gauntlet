@@ -1,19 +1,9 @@
-//-------------------------------------------------------------------------------------
-// Enemy.h
-//
-// THIS CODE AND INFORMATION IS PROVIDED "AS IS" WITHOUT WARRANTY OF
-// ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO
-// THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A
-// PARTICULAR PURPOSE.
-//
-// Written by Dale Green. Copyright (c) Packt Publishing. All rights reserved.
-//-------------------------------------------------------------------------------------
 #ifndef ENTITY_H
 #define ENTITY_H
 
 #include "Object.h"
 
-//TODO: Remove this class?
+//TODO: Remove this class - move update to component system.
 class Entity : public Object
 {
 public:
@@ -39,10 +29,5 @@ protected:
 	 * The index of the current texture.
 	 */
 	int m_currentTextureIndex;
-
-	/**
-	 * The entities current velocity.
-	 */
-	sf::Vector2f m_velocity;
 };
 #endif

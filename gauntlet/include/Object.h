@@ -12,7 +12,8 @@
 #define OBJECT_H
 
 #include<iostream>
-#include "C_Sprite.h"
+#include "C_StaticSprite.h"
+#include "C_AnimatedSprite.h"
 #include "C_Transform.h"
 #include "C_Title.h"
 #include "C_PointsOnPickup.h"
@@ -25,8 +26,16 @@
 #include "C_Stamina.h"
 #include "C_Mana.h"
 #include "C_Pathfinding.h"
+#include "C_AudioListener.h"
+#include "C_ProjectileAttack.h"
+#include "C_Tag.h"
+#include "C_Damageable.h"
+#include "C_SpawnItemsOnDeath.h"
+#include "C_PlaySoundOnDeath.h"
+#include "C_InstanceID.h"
+#include "C_CollisionDamage.h"
 
-//TODO cache c_transform so all objects have access rather than needing to call getcomponent.
+//TODO: add fixed and late update
 class Object
 {
 public:
@@ -37,10 +46,15 @@ public:
 
 	/**
 	 * Updates the game object. Called once per tick.
-	 * This is a pure virtual function, and must be implemented by extending classes.
 	 * @param timeDelta The time elapsed since the last tick in MS.
 	 */
 	virtual void Update(float timeDelta);
+
+	//TODO: we don't want to have to remember to set context when creating new objects. Have this set somewhere else or through constructor.
+	void SetContext(SharedContext* context);
+	SharedContext* GetContext();
+
+	void Destroy();
 
 	/**
 	* Attaches a component to the object.
@@ -90,11 +104,31 @@ public:
 		return nullptr;
 	};
 
+	template <typename T> std::vector<std::shared_ptr<T>> GetComponents()
+	{
+		std::vector<std::shared_ptr<T>> components;
+
+		// Check that we don't already have a component of this type.
+		for (std::shared_ptr<Component> exisitingComponent : m_components)
+		{
+			if (std::dynamic_pointer_cast<T>(exisitingComponent))
+			{
+				components.emplace_back(std::dynamic_pointer_cast<T>(exisitingComponent));
+			}
+		}
+
+		return components;
+	};
+
 public:
-	//TODO change to const getter method.
+	//TODO change to const getter method?
 	std::shared_ptr<C_Transform> m_transform;
+	std::shared_ptr<C_InstanceID> m_instanceID;
+	std::shared_ptr<C_Tag> m_tag;
 	
 private:
 	std::vector<std::shared_ptr<Component>> m_components;
+
+	SharedContext* m_context;
 };
 #endif

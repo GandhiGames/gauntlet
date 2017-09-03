@@ -4,11 +4,11 @@
 #include "C_Transform.h"
 
 //TODO: create animation component
-class C_Sprite : public Component
+class C_StaticSprite : public Component
 {
 public:
-	C_Sprite();
-	~C_Sprite();
+	C_StaticSprite();
+	~C_StaticSprite();
 
 	void LoadDependencies(Object* owner);
 
@@ -19,7 +19,7 @@ public:
 	* @param window The render window to draw the object to.
 	* @param tileDelta The time, in MS, since the last draw call.
 	*/
-	virtual void Draw(sf::RenderWindow &window, float timeDelta);
+	void Draw(sf::RenderWindow &window, float timeDelta) override;
 
 	/**
 	* Creates and sets the object sprite.
@@ -31,7 +31,7 @@ public:
 	* @param frameSpeed The speed that the animation plays at. Defaults to 1.
 	* @return true if the operation succeeded.
 	*/
-	bool SetSprite(sf::Texture& texture, bool isSmooth, int frames = 1, int frameSpeed = 0);
+	bool SetSprite(sf::Texture& texture);
 
 	/**
 	* Returns a reference the object's sprite.
@@ -39,23 +39,7 @@ public:
 	*/
 	sf::Sprite& GetSprite();
 
-	/**
-	* Get the number of frames the object has.
-	* @return The number of frames the object has.
-	*/
-	int GetFrameCount() const;
-
-	/**
-	* Gets the current animation state of the object.
-	* @return The current animation state of the object.
-	*/
-	bool IsAnimated();
-
-	/**
-	* Sets the animation state of the object.
-	* @param isAnimated The new animation state of the object.
-	*/
-	void SetAnimated(bool isAnimated);
+	
 
 private:
 	/**
@@ -69,41 +53,6 @@ private:
 	*/
 	sf::Sprite m_sprite;
 
-	/**
-	* The animation speed of the image if applicable.
-	* Value is frames per second.
-	*/
-	int m_animationSpeed;
-
-	/**
-	* Used to determine if the given sprite is animated.
-	*/
-	bool m_isAnimated;
-
-	/**
-	* The total number of frames the sprite has.
-	*/
-	int m_frameCount;
-
-	/**
-	* The current frame of the sprite.
-	*/
-	int m_currentFrame;
-
-	/**
-	* The width of each frame of the animated sprite if applicable.
-	*/
-	int m_frameWidth;
-
-	/**
-	* The height of each frame of the animated sprite if applicable.
-	*/
-	int m_frameHeight;
-
-	/**
-	* An aggregate of the time passed between draw calls.
-	*/
-	float m_timeDelta;
 
 	std::shared_ptr<C_Transform> m_transform;
 };

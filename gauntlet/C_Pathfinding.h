@@ -16,6 +16,8 @@ public:
 
 	void LoadDependencies(Object* owner);
 
+	const sf::Vector2f& GetVelocity() const;
+
 private:
 	sf::Vector2f* GetNextPosition();
 

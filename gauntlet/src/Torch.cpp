@@ -1,11 +1,9 @@
 #include "PCH.h"
 #include "Torch.h"
 
-// Default constructor.
-Torch::Torch() :
-m_brightness(1.f)
+Torch::Torch() : m_brightness(1.f)
 {
-	auto sprite = AddComponent<C_Sprite>();
+	auto sprite = AddComponent<C_AnimatedSprite>();
 
 	// Set sprite.
 	int textureID = TextureManager::AddTexture("../resources/spr_torch.png");

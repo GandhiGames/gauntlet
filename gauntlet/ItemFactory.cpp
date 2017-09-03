@@ -1,5 +1,6 @@
 #include "PCH.h"
 #include "ItemFactory.h"
+#include "Item.h"
 
 std::unique_ptr<Item> ItemFactory::CreateInstance(ITEM type)
 {
@@ -40,7 +41,7 @@ std::unique_ptr<Item> ItemFactory::CreateInstance(ITEM type)
 			break;
 		}
 
-		item.GetComponent<C_Sprite>()->SetSprite(TextureManager::GetTexture(TextureManager::AddTexture(spriteFilePath)), false, 8, 12);
+		item.GetComponent<C_AnimatedSprite>()->SetSprite(TextureManager::GetTexture(TextureManager::AddTexture(spriteFilePath)), false, 8, 12);
 
 		//TODO: move to component?
 		item.SetType(ITEM::POTION);
@@ -49,7 +50,7 @@ std::unique_ptr<Item> ItemFactory::CreateInstance(ITEM type)
 	}
 	case ITEM::GEM:
 	{
-		item.GetComponent<C_Sprite>()->SetSprite(TextureManager::GetTexture(TextureManager::AddTexture("../resources/loot/gem/spr_pickup_gem.png")), false, 8, 12);
+		item.GetComponent<C_AnimatedSprite>()->SetSprite(TextureManager::GetTexture(TextureManager::AddTexture("../resources/loot/gem/spr_pickup_gem.png")), false, 8, 12);
 		item.AddComponent<C_PointsOnPickup>()->SetValue(std::rand() % 100);
 		item.SetType(ITEM::GEM);
 
@@ -78,7 +79,7 @@ std::unique_ptr<Item> ItemFactory::CreateInstance(ITEM type)
 		}
 
 		// Set the sprite.
-		item.GetComponent<C_Sprite>()->SetSprite(TextureManager::GetTexture(textureID), false, 8, 12);
+		item.GetComponent<C_AnimatedSprite>()->SetSprite(TextureManager::GetTexture(textureID), false, 8, 12);
 
 		// Set the item type.
 		item.SetType(ITEM::GOLD);
@@ -88,7 +89,7 @@ std::unique_ptr<Item> ItemFactory::CreateInstance(ITEM type)
 	case ITEM::KEY:
 	{
 		int textureID = TextureManager::AddTexture("../resources/loot/key/spr_pickup_key.png");
-		item.GetComponent<C_Sprite>()->SetSprite(TextureManager::GetTexture(textureID), false, 8, 12);
+		item.GetComponent<C_AnimatedSprite>()->SetSprite(TextureManager::GetTexture(textureID), false, 8, 12);
 
 		auto title = item.AddComponent<C_Title>();
 		title->Set("Key");
@@ -98,7 +99,7 @@ std::unique_ptr<Item> ItemFactory::CreateInstance(ITEM type)
 	}
 	case ITEM::HEART:
 	{
-		item.GetComponent<C_Sprite>()->SetSprite(TextureManager::GetTexture(TextureManager::AddTexture("../resources/loot/heart/spr_pickup_heart.png")), false, 8, 12);
+		item.GetComponent<C_AnimatedSprite>()->SetSprite(TextureManager::GetTexture(TextureManager::AddTexture("../resources/loot/heart/spr_pickup_heart.png")), false, 8, 12);
 
 		item.AddComponent<C_PointsOnPickup>()->SetValue(std::rand() % 11 + 10);
 

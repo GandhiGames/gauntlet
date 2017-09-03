@@ -11,13 +11,7 @@ Game::Game(sf::RenderWindow* window) :
 	m_screenCenter({ 0, 0 }),
 	m_scoreTotal(0),
 	m_goldTotal(0),
-	m_playerPreviousTile(nullptr),
-	m_projectileTextureID(0),
-	m_goldGoal(0),
-	m_gemGoal(0),
-	m_killGoal(0),
-	m_goalString(""),
-	m_activeGoal(false)
+	m_playerPreviousTile(nullptr)
 {
 	// Enable VSync.
 	m_window.setVerticalSyncEnabled(true);
@@ -41,6 +35,13 @@ Game::Game(sf::RenderWindow* window) :
 	m_music.openFromFile("../resources/music/msc_main_track_" + std::to_string(trackIndex) + ".wav");
 
 	m_music.play();
+
+	m_player.GetComponent<C_Tag>()->Set(PLAYER_TAG);
+
+	m_context.m_enemies = &m_enemies;
+	m_context.m_level = &m_level;
+	m_context.m_items = &m_items;
+	m_context.m_window = &m_window;
 }
 
 // Initializes the game.
@@ -48,23 +49,6 @@ void Game::Initialize()
 {
 	// Get the screen size.
 	m_screenSize = m_window.getSize();
-
-	// Load the correct projectile texture.
-	switch (m_player.GetClass())
-	{
-	case PLAYER_CLASS::ARCHER:
-		m_projectileTextureID = TextureManager::AddTexture("../resources/projectiles/spr_arrow.png");
-		break;
-	case PLAYER_CLASS::MAGE:
-		m_projectileTextureID = TextureManager::AddTexture("../resources/projectiles/spr_magic_ball.png");
-		break;
-	case PLAYER_CLASS::THIEF:
-		m_projectileTextureID = TextureManager::AddTexture("../resources/projectiles/spr_dagger.png");
-		break;
-	case PLAYER_CLASS::WARRIOR:
-		m_projectileTextureID = TextureManager::AddTexture("../resources/projectiles/spr_sword.png");
-		break;
-	}
 
 	// Initialize the UI.
 	LoadUI();
@@ -91,12 +75,6 @@ void Game::Initialize()
 	m_fireSound.setMinDistance(80.f);
 	m_fireSound.play();
 
-	// Load enemy die sound.
-	soundBufferId = SoundBufferManager::AddSoundBuffer("../resources/sounds/snd_enemy_dead.wav");
-	m_enemyDieSound.setBuffer(SoundBufferManager::GetSoundBuffer(soundBufferId));
-	m_enemyDieSound.setAttenuation(5.f);
-	m_enemyDieSound.setMinDistance(80.f);
-
 	// Load gem pickup sound.
 	soundBufferId = SoundBufferManager::AddSoundBuffer("../resources/sounds/snd_gem_pickup.wav");
 	m_gemPickupSound.setBuffer(SoundBufferManager::GetSoundBuffer(soundBufferId));
@@ -112,11 +90,6 @@ void Game::Initialize()
 	m_keyPickupSound.setBuffer(SoundBufferManager::GetSoundBuffer(soundBufferId));
 	m_keyPickupSound.setRelativeToListener(true);
 
-	// Load player hit sound.
-	soundBufferId = SoundBufferManager::AddSoundBuffer("../resources/sounds/snd_player_hit.wav");
-	m_playerHitSound.setBuffer(SoundBufferManager::GetSoundBuffer(soundBufferId));
-	m_playerHitSound.setRelativeToListener(true);
-
 	// Add the new tile type to level.
 	m_level.AddTile("../resources/tiles/spr_tile_floor_alt.png", TILE::FLOOR_ALT);
 
@@ -125,7 +98,7 @@ void Game::Initialize()
 
 	//TODO: create aim sprite as child object of player.
 	int textureID = TextureManager::AddTexture("../resources/ui/spr_aim.png");
-	auto aimSprite = m_aim.AddComponent<C_Sprite>();
+	auto aimSprite = m_aim.AddComponent<C_StaticSprite>();
 	aimSprite->GetSprite().setTexture(TextureManager::GetTexture(textureID));
 	aimSprite->GetSprite().setOrigin(sf::Vector2f(16.5f, 16.5f));
 	aimSprite->GetSprite().setScale(2.f, 2.f);
@@ -333,12 +306,6 @@ void Game::GenerateLevel()
 	// Populate the level with items.
 	PopulateLevel();
 
-	// 1 in 3 change of creating a level goal.
-	if (((std::rand() % 3) == 0) && (!m_activeGoal))
-	{
-		GenerateLevelGoal();
-	}
-
 	// Moves the player to the start.
 	m_player.m_transform->SetPosition(m_level.SpawnLocation());
 }
@@ -418,6 +385,8 @@ void Game::Update(float timeDelta)
 
 	case GAME_STATE::PLAYING:
 	{
+
+
 		//TODO: cache get component call.
 		sf::Vector2i mousePos = sf::Mouse::getPosition();
 
@@ -449,25 +418,7 @@ void Game::Update(float timeDelta)
 			// Store the player position as it's used many times.
 			sf::Vector2f playerPosition = m_player.m_transform->GetPosition();
 
-			// Move the audio listener to the players location.
-			sf::Listener::setPosition(playerPosition.x, playerPosition.y, 0.f);
 
-			// If the player is attacking create a projectile.
-			if (m_player.IsAttacking())
-			{
-				//TODO: cache call to getcomponent.
-				auto mana = m_player.GetComponent<C_Mana>();
-				int curMana = mana->GetCurrent();
-				if (curMana >= 2)
-				{
-					sf::Vector2f target(static_cast<float>(sf::Mouse::getPosition().x), static_cast<float>(sf::Mouse::getPosition().y));
-					std::unique_ptr<Projectile> proj = std::make_unique<Projectile>(TextureManager::GetTexture(m_projectileTextureID), playerPosition, m_screenCenter, target);
-					m_playerProjectiles.push_back(std::move(proj));
-
-					// Reduce player mana.
-					mana->SetCurrent(curMana - 2);
-				}
-			}
 
 			// Update all items.
 			UpdateItems(playerPosition, timeDelta);
@@ -477,9 +428,6 @@ void Game::Update(float timeDelta)
 
 			// Update all enemies.
 			UpdateEnemies(playerPosition, timeDelta);
-
-			// Update all projectiles.
-			UpdateProjectiles(timeDelta);
 
 			// Find which torch is nearest the player.
 			auto torches = m_level.GetTorches();
@@ -523,36 +471,6 @@ void Game::Update(float timeDelta)
 				}
 			}
 
-			// Check if we have completed an active goal.
-			if (m_activeGoal)
-			{
-				if ((m_gemGoal <= 0) &&
-					(m_goldGoal <= 0) &&
-					(m_killGoal <= 0))
-				{
-					m_scoreTotal += std::rand() % 1001 + 1000;
-					m_activeGoal = false;
-				}
-				else
-				{
-					std::ostringstream ss;
-
-					if (m_goldGoal > 0)
-					{
-						ss << "Current Goal: Collect " << m_goldGoal << " gold" << "!" << std::endl;
-					}
-					else if (m_gemGoal > 0)
-					{
-						ss << "Current Goal: Collect " << m_gemGoal << " gem" << "!" << std::endl;
-					}
-					else if (m_killGoal > 0)
-					{
-						ss << "Current Goal: Kill " << m_killGoal << " enemies" << "!" << std::endl;
-					}
-
-					m_goalString = ss.str();
-				}
-			}
 
 			// Venter the view.
 			m_views[static_cast<int>(VIEW::MAIN)].setCenter(playerPosition);
@@ -618,6 +536,33 @@ void Game::UpdateLight(sf::Vector2f playerPosition, float timeDelta)
 	}
 }
 
+// Spawns a given object type at a random location within the map. Has the option to explicitly set a spawn location.
+void Game::SpawnItem(ITEM itemType, sf::Vector2f position)
+{
+	int objectIndex = 0;
+
+	// Choose a random, unused spawn location.
+	sf::Vector2f spawnLocation;
+
+	if ((position.x >= 0.f) || (position.y >= 0.f))
+	{
+		spawnLocation = position;
+	}
+	else
+	{
+		spawnLocation = m_context.m_level->GetRandomSpawnLocation();
+	}
+
+	std::unique_ptr<Item> item = ItemFactory::CreateInstance(itemType);
+	item->SetContext(&m_context);
+
+	// Set the item position.
+	item->m_transform->SetPosition(spawnLocation);
+
+	//TODO: shared context should have reference to list of all items, this should be added to it.
+	m_items.push_back(std::move(item));
+}
+
 // Updates all items in the level.
 void Game::UpdateItems(sf::Vector2f playerPosition, float timeDelta)
 {
@@ -629,7 +574,7 @@ void Game::UpdateItems(sf::Vector2f playerPosition, float timeDelta)
 		Item& item = **itemIterator;
 
 		item.Update(timeDelta);
-	
+
 		if (DistanceBetweenPoints(item.m_transform->GetPosition(), playerPosition) < 40.f)
 		{
 			//TODO: convert to ActionOnPickUp Components
@@ -646,40 +591,27 @@ void Game::UpdateItems(sf::Vector2f playerPosition, float timeDelta)
 					// Add to the gold total.
 					m_goldTotal += goldValue;
 
-					// Check if we have an active level goal regarding gold.
-					if (m_activeGoal)
-					{
-						m_goldGoal -= goldValue;
-					}
 				}
 
 
 				// Play gold collect sound effect.
 				PlaySound(m_coinPickupSound);
+				break;
 			}
-			break;
-
 			case ITEM::GEM:
 			{
-
 				auto points = item.GetComponent<C_PointsOnPickup>();
 
 				if (points)
 				{
 					m_scoreTotal += points->GetValue();
-
-					// Check if we have an active level goal.
-					if (m_activeGoal)
-					{
-						--m_gemGoal;
-					}
 				}
 
 				// Play the gem pickup sound
 				PlaySound(m_gemPickupSound);
-			}
-			break;
 
+				break;
+			}
 			case ITEM::KEY:
 			{
 				// Unlock the door.
@@ -690,10 +622,9 @@ void Game::UpdateItems(sf::Vector2f playerPosition, float timeDelta)
 
 				// Set the key as collected.
 				m_keyUiSprite->setColor(sf::Color::White);
+
+				break;
 			}
-			break;
-
-
 			case ITEM::POTION:
 			{
 				switch (item.GetComponent<C_PotionType>()->Get())
@@ -729,15 +660,17 @@ void Game::UpdateItems(sf::Vector2f playerPosition, float timeDelta)
 					break;
 				}
 				}
-			}
-			break;
 
+				break;
+			}
 			case ITEM::HEART:
-			
+			{
 				auto heart = item.GetComponent<C_PointsOnPickup>();
 
 				auto health = m_player.GetComponent<C_Health>();
 				health->SetCurrent(health->GetCurrent() + heart->GetValue());
+				break;
+			}
 			}
 
 			// Finally, delete the object.
@@ -757,130 +690,17 @@ void Game::UpdateEnemies(sf::Vector2f playerPosition, float timeDelta)
 	// Store player tile.
 	Tile* playerTile = m_level.GetTile(m_player.m_transform->GetPosition());
 
+	//TODO: change to for each loop? this may crash as enemies are removed from list during iteration
 	auto enemyIterator = m_enemies.begin();
 	while (enemyIterator != m_enemies.end())
 	{
-		// Create a bool so we can check if an enemy was deleted.
-		bool enemyWasDeleted = false;
+		Entity& enemy = **enemyIterator;
 
-		// Get the enemy object from the iterator.
-		Enemy& enemy = **enemyIterator;
-
-		// Get the tile that the enemy is on.
-		Tile* enemyTile = m_level.GetTile(enemy.m_transform->GetPosition());
-
-		// Check for collisions with projectiles.
-		auto projectilesIterator = m_playerProjectiles.begin();
-		while (projectilesIterator != m_playerProjectiles.end())
-		{
-			// Get the projectile object from the iterator.
-			Projectile& projectile = **projectilesIterator;
-
-			// If the enemy and projectile occupy the same tile they have collided.
-			if (enemyTile == m_level.GetTile(projectile.m_transform->GetPosition()))
-			{
-				// Delete the projectile.
-				projectilesIterator = m_playerProjectiles.erase(projectilesIterator);
-
-				// Damage the enemy.
-				auto health = enemy.GetComponent<C_Health>();
-				health->Damage(25);
-
-				// If the enemy is dead remove it.
-				if (health->IsDead())
-				{
-					// Get the enemy position.
-					sf::Vector2f position = enemy.m_transform->GetPosition();
-
-					// Spawn loot.
-					for (int i = 0; i < 5; i++)
-					{
-						position.x += std::rand() % 31 - 15;
-						position.y += std::rand() % 31 - 15;
-						SpawnItem(static_cast<ITEM>(std::rand() % 2), position);	// Generates a number 0 - 1
-					}
-
-					if ((std::rand() % 5) == 0)			// 1 in 5 change of spawning health.
-					{
-						position.x += std::rand() % 31 - 15;
-						position.y += std::rand() % 31 - 15;
-						SpawnItem(ITEM::HEART, position);
-					}
-					// 1 in 5 change of spawning potion.
-					else if ((std::rand() % 5) == 1)
-					{
-						position.x += std::rand() % 31 - 15;
-						position.y += std::rand() % 31 - 15;
-						SpawnItem(ITEM::POTION, position);
-					}
-
-					// Play enemy kill sound.
-					PlaySound(m_enemyDieSound, enemy.m_transform->GetPosition());
-
-					// Delete enemy.
-					enemyIterator = m_enemies.erase(enemyIterator);
-					enemyWasDeleted = true;
-
-					// If we have an active goal decrement killGoal.
-					if (m_activeGoal)
-					{
-						--m_killGoal;
-					}
-
-					// Since the enemy is dead we no longer need to check projectiles.
-					projectilesIterator = m_playerProjectiles.end();
-				}
-			}
-			else
-			{
-				// Move to the next projectile.
-				++projectilesIterator;
-			}
-		}
-
-		// If the enemy was not deleted, update it and increment the iterator.
-		if (!enemyWasDeleted)
-		{
-			enemy.Update(timeDelta);
-			++enemyIterator;
-		}
-
-		// Check for collision with player.
-		if (enemyTile == playerTile)
-		{
-			//TODO: cap damage
-			m_player.GetComponent<C_Health>()->Damage(10);
-			PlaySound(m_playerHitSound);
-
-		}
+		enemy.Update(timeDelta);
+		++enemyIterator;
 	}
 }
 
-// Updates all projectiles in the level.
-void Game::UpdateProjectiles(float timeDelta)
-{
-	auto projectileIterator = m_playerProjectiles.begin();
-	while (projectileIterator != m_playerProjectiles.end())
-	{
-		// Get the projectile object from the iterator.
-		Projectile& projectile = **projectileIterator;
-
-		// Get the tile that the projectile is on.
-		TILE projectileTileType = m_level.GetTile(projectile.m_transform->GetPosition())->type;
-
-		// If the tile the projectile is on is not floor, delete it.
-		if ((projectileTileType != TILE::FLOOR) && (projectileTileType != TILE::FLOOR_ALT))
-		{
-			projectileIterator = m_playerProjectiles.erase(projectileIterator);
-		}
-		else
-		{
-			// Update the projectile and move to the next one.
-			projectile.Update(timeDelta);
-			++projectileIterator;
-		}
-	}
-}
 
 // Calculates the distance between two given points.
 float Game::DistanceBetweenPoints(sf::Vector2f position1, sf::Vector2f position2)
@@ -906,31 +726,7 @@ void Game::DrawString(std::string text, sf::Vector2f position, unsigned int size
 	m_window.draw(m_text);
 }
 
-// Spawns a given object type at a random location within the map. Has the option to explicitly set a spawn location.
-void Game::SpawnItem(ITEM itemType, sf::Vector2f position)
-{
-	
 
-	int objectIndex = 0;
-
-	// Choose a random, unused spawn location.
-	sf::Vector2f spawnLocation;
-
-	if ((position.x >= 0.f) || (position.y >= 0.f))
-		spawnLocation = position;
-	else
-		spawnLocation = m_level.GetRandomSpawnLocation();
-
-	std::unique_ptr<Item> item = ItemFactory::CreateInstance(itemType);
-
-	// Set the item position.
-	item->m_transform->SetPosition(spawnLocation);
-	//TODO: sprite should require transform component and read position from that.
-	//item->GetComponent<C_Sprite>()->GetSprite().setPosition(spawnLocation);
-
-	// Add the item to the list of all items.
-	m_items.push_back(std::move(item));
-}
 
 // Spawns a given number of enemies in the level.
 void Game::SpawnEnemy(ENEMY enemyType, sf::Vector2f position)
@@ -945,10 +741,13 @@ void Game::SpawnEnemy(ENEMY enemyType, sf::Vector2f position)
 		spawnLocation = m_level.GetRandomSpawnLocation();
 
 	// Create the enemy.
-	std::unique_ptr<Enemy> enemy = EntityFactory::CreateInstance(enemyType);
+	std::unique_ptr<Entity> enemy = EntityFactory::GetInstance()->Create(enemyType, &m_context);
 
+	//TODO: do we need this check? should't it always return an enemy?
 	if (enemy)
 	{
+		enemy->SetContext(&m_context);
+
 		// Set spawn location.
 		enemy->m_transform->SetPosition(spawnLocation);
 
@@ -982,51 +781,7 @@ void Game::SpawnRandomTiles(TILE tileType, int count)
 	}
 }
 
-// Generates a random level goal.
-void Game::GenerateLevelGoal()
-{
-	std::ostringstream ss;
-
-	// Reset our goal variables.
-	m_killGoal = 0;
-	m_goldGoal = 0;
-	m_gemGoal = 0;
-
-	// Choose which type of goal is to be generated.
-	int goalType = std::rand() % 3;
-
-	switch (goalType)
-	{
-	case 0:		// Kill X Enemies
-		m_killGoal = std::rand() % 6 + 5;
-
-		// Create the string describing the goal.
-		ss << "Current Goal: Kill " << m_killGoal << " enemies" << "!" << std::endl;
-		break;
-
-	case 1:		// Collect X Gold
-		m_goldGoal = std::rand() % 51 + 50;
-
-		// Create the string describing the goal.
-		ss << "Current Goal: Collect " << m_goldGoal << " gold" << "!" << std::endl;
-		break;
-
-	case 2:		// Collect X Gems
-		m_gemGoal = std::rand() % 6 + 5;
-
-		// Create the string describing the goal.
-		ss << "Current Goal: Collect " << m_gemGoal << " gems" << "!" << std::endl;
-		break;
-	}
-
-	// Store our string.
-	m_goalString = ss.str();
-
-	// Set the goal as active.
-	m_activeGoal = true;
-}
-
-// Plays the given sound effect, with randomized parameters.
+//TODO: this should not be in game class: move to components.
 void Game::PlaySound(sf::Sound& sound, sf::Vector2f position)
 {
 	// Generate and set a random pitch.
@@ -1065,7 +820,7 @@ void Game::Draw(float timeDelta)
 		//TODO: create getcomponents that returns list of all components that match type. Use this to return all drawable.
 		for (const auto& item : m_items)
 		{
-			auto sprite = item->GetComponent<C_Sprite>();
+			auto sprite = item->GetComponent<C_AnimatedSprite>();
 
 			if (sprite)
 			{
@@ -1084,7 +839,7 @@ void Game::Draw(float timeDelta)
 		// then have one loop through all game objects and call draw on the object::draw.
 		for (const auto& enemy : m_enemies)
 		{
-			auto sprite = enemy->GetComponent<C_Sprite>();
+			auto sprite = enemy->GetComponent<C_AnimatedSprite>();
 
 			if (sprite)
 			{
@@ -1092,19 +847,10 @@ void Game::Draw(float timeDelta)
 			}
 		}
 
-		// Draw all projectiles
-		for (const auto& proj : m_playerProjectiles)
-		{
-			auto sprite = proj->GetComponent<C_Sprite>();
 
-			if (sprite)
-			{
-				sprite->Draw(m_window, timeDelta);
-			}
-		}
 
 		// Draw the player.
-		m_player.GetComponent<C_Sprite>()->Draw(m_window, timeDelta);
+		m_player.GetComponent<C_AnimatedSprite>()->Draw(m_window, timeDelta);
 
 		// Draw level light.
 		for (const sf::Sprite& sprite : m_lightGrid)
@@ -1116,13 +862,7 @@ void Game::Draw(float timeDelta)
 		m_window.setView(m_views[static_cast<int>(VIEW::UI)]);
 
 		// TODO: cache getcomponent.
-		m_aim.GetComponent<C_Sprite>()->Draw(m_window, timeDelta);
-
-		// Draw the level goal if active.
-		if (m_activeGoal)
-		{
-			DrawString(m_goalString, sf::Vector2f(static_cast<float>(m_window.getSize().x / 2), static_cast<float>(m_window.getSize().y - 75)), 30);
-		}
+		m_aim.GetComponent<C_StaticSprite>()->Draw(m_window, timeDelta);
 
 		// Draw player stats.
 		//TODO: cache components.

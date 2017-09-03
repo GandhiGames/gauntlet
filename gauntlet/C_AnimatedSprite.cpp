@@ -1,35 +1,56 @@
 #include "PCH.h"
-#include "C_Sprite.h"
+#include "C_AnimatedSprite.h"
 #include "Object.h"
 
-C_Sprite::C_Sprite() : Component(true),
-	m_animationSpeed(0),
-	m_isAnimated(false),
-	m_frameCount(0),
-	m_currentFrame(0),
-	m_frameWidth(0),
-	m_frameHeight(0),
-	m_timeDelta(0)
-{
-	
-}
-
-C_Sprite::~C_Sprite()
+C_AnimatedSprite::C_AnimatedSprite() : Component(true),
+m_animationSpeed(0),
+m_frameCount(0),
+m_currentFrame(0),
+m_frameWidth(0),
+m_frameHeight(0),
+m_timeDelta(0),
+m_animated(false)
 {
 }
 
-void C_Sprite::LoadDependencies(Object* owner) 
+C_AnimatedSprite::~C_AnimatedSprite()
 {
+}
+
+void C_AnimatedSprite::LoadDependencies(Object* owner)
+{
+	assert(!owner->GetComponent<C_StaticSprite>());
+
 	m_transform = owner->m_transform;
 }
 
-void C_Sprite::Update(float deltaTime)
+void C_AnimatedSprite::Update(float deltaTime)
 {
 	m_sprite.setPosition(m_transform->GetPosition());
 }
 
+void C_AnimatedSprite::SetAnimated(bool animated)
+{
+	m_animated = animated;
+
+	if (m_animated)
+	{
+		m_currentFrame = 0;
+	}
+	else
+	{
+		// set the texture rect of the first frame
+		m_sprite.setTextureRect(sf::IntRect(0, 0, m_frameWidth, m_frameHeight));
+	}
+}
+
+bool C_AnimatedSprite::IsAnimated()
+{
+	return m_animated;
+}
+
 // Gives the object the given sprite.
-bool C_Sprite::SetSprite(sf::Texture& texture, bool isSmooth, int frames, int frameSpeed)
+bool C_AnimatedSprite::SetSprite(sf::Texture& texture, bool isSmooth, int frames, int frameSpeed)
 {
 	// Create a sprite from the loaded texture.
 	m_sprite.setTexture(texture);
@@ -49,15 +70,14 @@ bool C_Sprite::SetSprite(sf::Texture& texture, bool isSmooth, int frames, int fr
 	if (frames > 1)
 	{
 		// Set sprite as animated.
-		m_isAnimated = true;
+		m_animated = true;
 
 		// Set the texture rect of the first frame.
 		m_sprite.setTextureRect(sf::IntRect(0, 0, m_frameWidth, m_frameHeight));
 	}
 	else
 	{
-		// Set sprite as non animated.
-		m_isAnimated = false;
+		m_animated = false;
 	}
 
 	// Set the origin of the sprite.
@@ -67,38 +87,15 @@ bool C_Sprite::SetSprite(sf::Texture& texture, bool isSmooth, int frames, int fr
 }
 
 //TODO: remove this function and provide functionality through different methods.
-sf::Sprite& C_Sprite::GetSprite()
+sf::Sprite& C_AnimatedSprite::GetSprite()
 {
 	return m_sprite;
 }
 
-// Gets the current animation state of the object.
-bool C_Sprite::IsAnimated()
-{
-	return m_isAnimated;
-}
-
-// Sets the animation state of the object.
-void C_Sprite::SetAnimated(bool isAnimated)
-{
-	m_isAnimated = isAnimated;
-
-	if (isAnimated)
-	{
-		m_currentFrame = 0;
-	}
-	else
-	{
-		// set the texture rect of the first frame
-		m_sprite.setTextureRect(sf::IntRect(0, 0, m_frameWidth, m_frameHeight));
-	}
-}
-
 // Draws the object to the given render window.
-void C_Sprite::Draw(sf::RenderWindow &window, float timeDelta)
+void C_AnimatedSprite::Draw(sf::RenderWindow &window, float timeDelta)
 {
-	// check if the sprite is animated
-	if (m_isAnimated)
+	if (m_animated)
 	{
 		// add the elapsed time since the last draw call to the aggregate
 		m_timeDelta += timeDelta;
@@ -115,7 +112,7 @@ void C_Sprite::Draw(sf::RenderWindow &window, float timeDelta)
 }
 
 // Advances the sprite forward a frame.
-void C_Sprite::NextFrame()
+void C_AnimatedSprite::NextFrame()
 {
 	// check if we reached the last frame
 	if (m_currentFrame == (m_frameCount - 1))
@@ -128,9 +125,8 @@ void C_Sprite::NextFrame()
 }
 
 // Gets the frame count of the object.
-int C_Sprite::GetFrameCount() const
+int C_AnimatedSprite::GetFrameCount() const
 {
 	return m_frameCount;
 }
-
 

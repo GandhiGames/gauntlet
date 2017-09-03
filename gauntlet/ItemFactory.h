@@ -1,6 +1,5 @@
+//TODO: normalise pragma vs IFNDEF, any reason to still use IFNDEF?
 #pragma once
-
-#include "Item.h"
 
 // Spawnable items.
 enum class ITEM {
@@ -15,6 +14,7 @@ enum class ITEM {
 
 class ItemFactory
 {
+	friend class Item;
 public:
 	static std::unique_ptr<Item> CreateInstance(ITEM type);
 };

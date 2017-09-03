@@ -11,6 +11,10 @@
 #ifndef UTIL_H
 #define UTIL_H
 
+static std::string ENEMY_TAG = "ENEMY";
+static std::string PLAYER_TAG = "PLAYER";
+static std::string PROJECTILE_TAG = "PROJECTILE";
+
 // Music tracks.
 enum class MUSIC_TRACK {
 	ALT_1,

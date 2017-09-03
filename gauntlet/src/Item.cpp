@@ -4,7 +4,8 @@
 // Default constructor.
 Item::Item() 
 {
-	AddComponent<C_Sprite>();
+	//TODO: can this be static?
+	AddComponent<C_AnimatedSprite>();
 }
 
 void Item::SetType(ITEM type)

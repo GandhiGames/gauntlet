@@ -11,6 +11,7 @@ enum class POTION {
 	COUNT
 };
 
+//TODO: convert to C_Tag.
 class C_PotionType : public Component
 {
 public:

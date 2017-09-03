@@ -17,6 +17,7 @@
 #include "Item.h"
 #include "Level.h"
 #include "Humanoid.h"
+#include "SharedContext.h"
 
 static float const FPS = 60.0;						// Constant for fixed time - step loop. We'll lock it at 60fps.
 static float const MS_PER_STEP = 1.0f / FPS;		// Roughly (0.017) @ 60fps.
@@ -111,14 +112,6 @@ private:
 	void DrawString(std::string text, sf::Vector2f position, unsigned int size = 10);
 
 	/**
-	 * Spawns a given item within the level.
-	 * Be default, the object will be spawned at a random location. There are optional parameters to override and spawn at a given location.
-	 * @param itemType The type of the item to spawn.
-	 * @param position The position to spawn the item at.
-	 */
-	void SpawnItem(ITEM itemType, sf::Vector2f position = { -1.f, -1.f });
-
-	/**
 	* Spawns a given enemy within the level.
 	* Be default, the object will be spawned at a random location. There are optional parameters to override and spawn at a given location.
 	* @param enemyType The type of the enemy to spawn.
@@ -126,15 +119,12 @@ private:
 	*/
 	void SpawnEnemy(ENEMY enemyType, sf::Vector2f position = { -1.f, -1.f });
 
+	void SpawnItem(ITEM itemType, sf::Vector2f position = { -1.f, -1.f });
+
 	/**
 	 * Constructs the grid of sprites that are used to draw the game light system.
 	 */
 	void ConstructLightGrid();
-
-	/**
-	 * Generates a level goal.
-	 */
-	void GenerateLevelGoal();
 
 	//TODO: remove passing timeDelta when object.h no longer requires it.
 	/**
@@ -157,13 +147,11 @@ private:
 	 */
 	void UpdateEnemies(sf::Vector2f playerPosition, float timeDelta);
 
-	/**
-	 * Updates all projectiles in the level.
-	 * @param timeDetla The amount of time that has passed since the last update.
-	 */
-	void UpdateProjectiles(float timeDelta);
 
 private:
+
+	SharedContext m_context;
+
 	/**
 	 * The main application window.
 	 */
@@ -197,7 +185,7 @@ private:
 	/**
 	 * A vector that holds all the enemies within the level.
 	 */
-	std::vector<std::unique_ptr<Enemy>> m_enemies;
+	std::vector<std::unique_ptr<Entity>> m_enemies;
 
 	/**
 	 * A bool that tracks the running state of the game. It's used in the main loop.
@@ -335,41 +323,6 @@ private:
 	Tile* m_playerPreviousTile;
 
 	/**
-	 * A vector of all the player's projectiles.
-	 */
-	std::vector<std::unique_ptr<Projectile>> m_playerProjectiles;
-
-	/**
-	 * The ID of the player's projectile texture.
-	 */
-	int m_projectileTextureID;
-
-	/**
-	 * The value of gold remaining for the current goal.
-	 */
-	int m_goldGoal;
-
-	/**
-	 * The value of gems remaining for the current goal.
-	 */
-	int m_gemGoal;
-
-	/**
-	 * The number of kills remaining for the current goal.
-	 */
-	int m_killGoal;
-
-	/**
-	* The text that will hold the level goal.
-	*/
-	sf::String m_goalString;
-
-	/**
-	 * A boolean denoting if a goal is currently active.
-	 */
-	bool m_activeGoal;
-
-	/**
 	 * Sprite for the health bar.
 	 */
 	std::shared_ptr<sf::Sprite> m_healthBarSprite;
@@ -413,16 +366,6 @@ private:
 	* Key collect sound.
 	*/
 	sf::Sound m_keyPickupSound;
-
-	/**
-	 * Enemy die sound.
-	 */
-	sf::Sound m_enemyDieSound;
-
-	/**
-	 * Player hit sound.
-	 */
-	sf::Sound m_playerHitSound;
 
 	/**
 	 * The main music.

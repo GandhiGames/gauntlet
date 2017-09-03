@@ -585,7 +585,7 @@ void Level::Draw(sf::RenderWindow& window, float timeDelta)
 	// Draw all torches.
 	for (auto& torch : m_torches)
 	{
-		auto sprite = torch->GetComponent<C_Sprite>();
+		auto sprite = torch->GetComponent<C_AnimatedSprite>();
 
 		if (sprite)
 		{

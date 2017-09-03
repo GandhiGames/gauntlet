@@ -99,9 +99,6 @@
     <ClCompile Include="src\Player.cpp">
       <Filter>Source Files\Characters</Filter>
     </ClCompile>
-    <ClCompile Include="src\Enemy.cpp">
-      <Filter>Source Files\Characters\Enemies</Filter>
-    </ClCompile>
     <ClCompile Include="src\Humanoid.cpp">
       <Filter>Source Files\Characters\Enemies</Filter>
     </ClCompile>
@@ -112,9 +109,6 @@
       <Filter>Source Files\Components</Filter>
     </ClCompile>
     <ClCompile Include="C_PointsOnPickup.cpp">
-      <Filter>Source Files\Components</Filter>
-    </ClCompile>
-    <ClCompile Include="C_Sprite.cpp">
       <Filter>Source Files\Components</Filter>
     </ClCompile>
     <ClCompile Include="C_Title.cpp">
@@ -153,8 +147,41 @@
     <ClCompile Include="C_Mana.cpp">
       <Filter>Source Files\Components</Filter>
     </ClCompile>
+    <ClCompile Include="C_AnimatedSprite.cpp">
+      <Filter>Source Files\Components</Filter>
+    </ClCompile>
     <ClCompile Include="C_Pathfinding.cpp">
+      <Filter>Source Files\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="C_StaticSprite.cpp">
+      <Filter>Source Files\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="C_AudioListener.cpp">
+      <Filter>Source Files\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="SharedContext.cpp">
       <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C_ProjectileAttack.cpp">
+      <Filter>Source Files\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="C_Tag.cpp">
+      <Filter>Source Files\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="C_CollisionDamage.cpp">
+      <Filter>Source Files\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="C_Damageable.cpp">
+      <Filter>Source Files\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="C_SpawnItemsOnDeath.cpp">
+      <Filter>Source Files\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="C_PlaySoundOnDeath.cpp">
+      <Filter>Source Files\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="C_InstanceID.cpp">
+      <Filter>Source Files\Components</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -197,9 +224,6 @@
     <ClInclude Include="include\Player.h">
       <Filter>Header Files\Characters</Filter>
     </ClInclude>
-    <ClInclude Include="include\Enemy.h">
-      <Filter>Header Files\Characters\Enemies</Filter>
-    </ClInclude>
     <ClInclude Include="include\Humanoid.h">
       <Filter>Header Files\Characters\Enemies</Filter>
     </ClInclude>
@@ -210,9 +234,6 @@
       <Filter>Header Files\Components</Filter>
     </ClInclude>
     <ClInclude Include="C_PointsOnPickup.h">
-      <Filter>Header Files\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="C_Sprite.h">
       <Filter>Header Files\Components</Filter>
     </ClInclude>
     <ClInclude Include="C_Title.h">
@@ -252,7 +273,40 @@
       <Filter>Header Files\Components</Filter>
     </ClInclude>
     <ClInclude Include="C_Pathfinding.h">
+      <Filter>Header Files\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="C_AnimatedSprite.h">
+      <Filter>Header Files\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="C_StaticSprite.h">
+      <Filter>Header Files\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="C_AudioListener.h">
+      <Filter>Header Files\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="SharedContext.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C_Tag.h">
+      <Filter>Header Files\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="C_ProjectileAttack.h">
+      <Filter>Header Files\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="C_CollisionDamage.h">
+      <Filter>Header Files\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="C_Damageable.h">
+      <Filter>Header Files\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="C_SpawnItemsOnDeath.h">
+      <Filter>Header Files\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="C_PlaySoundOnDeath.h">
+      <Filter>Header Files\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="C_InstanceID.h">
+      <Filter>Header Files\Components</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>
