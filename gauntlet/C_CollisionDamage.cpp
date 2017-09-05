@@ -16,28 +16,36 @@ C_CollisionDamage::~C_CollisionDamage()
 
 void C_CollisionDamage::LoadDependencies(Object* owner)
 {
-	m_owner = owner;
 	m_transform = owner->m_transform;
 }
 
 //TODO: rename class to tile collision damage.
 //TODO: create bounding box version.
-void C_CollisionDamage::Update(float deltaTime)
+void C_CollisionDamage::Update(float deltaTime, Object* owner)
 {
-	SharedContext* context = m_owner->GetContext();
+	SharedContext* context = owner->GetContext();
+	assert(owner);
 
+	Tile* curTile = context->m_level->GetTile(m_transform->GetPosition());
+
+	//TODO: need to have a standard objects list (no seperate lists for enemies etc).
 	auto enemyIterator = context->m_enemies->begin();
 	while (enemyIterator != context->m_enemies->end())
 	{
 		// Get the enemy object from the iterator.
 		Entity& other = **enemyIterator;
 
+		if (m_targetTag == ENEMY_TAG)
+		{
+			printf("dont care");
+		}
+
 		if (other.m_tag->Get() == m_targetTag)
 		{
 			// Get the tile that the enemy is on.
 			Tile* enemyTile = context->m_level->GetTile(other.m_transform->GetPosition());
 
-			if (enemyTile == context->m_level->GetTile(m_transform->GetPosition()))
+			if (enemyTile == curTile)
 			{
 				auto damageables = other.GetComponents<C_Damageable>();
 
@@ -46,12 +54,19 @@ void C_CollisionDamage::Update(float deltaTime)
 					d->DoDamage(m_damageAmount);
 				}
 
-				if (m_collisionSound)
+				owner->Destroy();
+
+				//TODO: re-implement this
+				/*
+				if (m_collisionSound != nullptr)
 				{
 					PlaySound(m_collisionSound);
 				}
+				*/
 			}
 		}
+
+		++enemyIterator;
 	}
 }
 

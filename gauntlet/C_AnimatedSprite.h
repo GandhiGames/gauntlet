@@ -1,10 +1,11 @@
 #pragma once
 
-#include "Component.h"
+#include "C_Drawable.h"
+#include "C_Updateable.h"
 #include "C_Transform.h"
 #include <assert.h>
 
-class C_AnimatedSprite : public Component
+class C_AnimatedSprite : public Component, public C_Drawable, public C_Updateable
 {
 	friend class Object;
 
@@ -12,16 +13,16 @@ public:
 	C_AnimatedSprite();
 	~C_AnimatedSprite();
 
-	void LoadDependencies(Object* owner);
+	void LoadDependencies(Object* owner) override;
 
-	void Update(float deltaTime);
+	void Update(float deltaTime, Object* owner) override;
 
 	/**
 	* Draws the object to the screen at its current position.
 	* @param window The render window to draw the object to.
 	* @param tileDelta The time, in MS, since the last draw call.
 	*/
-	virtual void Draw(sf::RenderWindow &window, float timeDelta);
+	virtual void Draw(sf::RenderWindow &window, float timeDelta) override;
 
 	/**
 	* Creates and sets the object sprite.

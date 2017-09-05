@@ -12,8 +12,10 @@ public:
 
 	Level* m_level;
 
-	std::vector<std::unique_ptr<Item>>* m_items;
+	std::vector<std::unique_ptr<Object>>* m_items;
 
 	sf::RenderWindow* m_window;
+
+	std::vector<sf::Sprite>* m_lightGrid;
 };
 

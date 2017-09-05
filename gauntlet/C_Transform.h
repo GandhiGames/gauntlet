@@ -34,7 +34,7 @@ public:
 	*/
 	const sf::Vector2f& GetPosition() const;
 
-	//TODO: implement
+	//TODO: implement this, should set position relative to parent and be abloe to call transform.parent
 	void SetParent(C_Transform* parent);
 
 private:

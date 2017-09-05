@@ -34,6 +34,12 @@
 #include "C_PlaySoundOnDeath.h"
 #include "C_InstanceID.h"
 #include "C_CollisionDamage.h"
+#include "C_Drawable.h"
+#include "C_Updateable.h"
+#include "C_ItemType.h"
+#include "C_Projectile.h"
+#include "C_Torch.h"
+#include "C_Movement.h"
 
 //TODO: add fixed and late update
 class Object
@@ -49,6 +55,8 @@ public:
 	 * @param timeDelta The time elapsed since the last tick in MS.
 	 */
 	virtual void Update(float timeDelta);
+
+	void Draw(sf::RenderWindow &window, float timeDelta);
 
 	//TODO: we don't want to have to remember to set context when creating new objects. Have this set somewhere else or through constructor.
 	void SetContext(SharedContext* context);
@@ -68,7 +76,7 @@ public:
 		if (newComponent->RequiresUnique())
 		{
 			// Check that we don't already have a component of this type.
-			for (std::shared_ptr<Component>& exisitingComponent : m_components)
+			for (auto& exisitingComponent : m_components)
 			{
 				if (std::dynamic_pointer_cast<T>(exisitingComponent))
 				{
@@ -93,7 +101,7 @@ public:
 	template <typename T> std::shared_ptr<T> GetComponent()
 	{
 		// Check that we don't already have a component of this type.
-		for (std::shared_ptr<Component> exisitingComponent : m_components)
+		for (auto& exisitingComponent : m_components)
 		{
 			if (std::dynamic_pointer_cast<T>(exisitingComponent))
 			{
@@ -109,7 +117,7 @@ public:
 		std::vector<std::shared_ptr<T>> components;
 
 		// Check that we don't already have a component of this type.
-		for (std::shared_ptr<Component> exisitingComponent : m_components)
+		for (auto& exisitingComponent : m_components)
 		{
 			if (std::dynamic_pointer_cast<T>(exisitingComponent))
 			{

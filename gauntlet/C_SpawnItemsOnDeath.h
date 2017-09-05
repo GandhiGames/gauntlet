@@ -1,9 +1,11 @@
 #pragma once
 
+#include "C_Updateable.h"
 #include "C_Transform.h"
-#include "ItemFactory.h"
 
-class C_SpawnItemsOnDeath : public Component
+enum class ITEM;
+
+class C_SpawnItemsOnDeath : public Component, public C_Updateable
 {
 	friend class SharedContext;
 
@@ -12,6 +14,8 @@ public:
 	~C_SpawnItemsOnDeath();
 
 	void LoadDependencies(Object* owner) override;
+
+	void Update(float deltaTime, Object* owner) override;
 
 private:
 	void OnDeath();
@@ -22,11 +26,10 @@ private:
 	* @param itemType The type of the item to spawn.
 	* @param position The position to spawn the item at.
 	*/
-	void SpawnItem(ITEM itemType, sf::Vector2f position = { -1.f, -1.f });
+	void SpawnItem(ITEM itemType, sf::Vector2f position);
 
 private:
 	std::shared_ptr<C_Transform> m_transform;
-
 	Object* m_owner;
 };
 

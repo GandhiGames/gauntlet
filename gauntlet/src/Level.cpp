@@ -1,5 +1,6 @@
 #include "PCH.h"
 #include "Level.h"
+#include "Object.h"
 
 // Default constructor.
 Level::Level()
@@ -7,12 +8,13 @@ Level::Level()
 }
 
 // Constructor.
-Level::Level(sf::RenderWindow& window) : 
+Level::Level(sf::RenderWindow& window, SharedContext* context) : 
 m_origin({ 0, 0 }),
 m_floorNumber(1),
 m_roomNumber(0),
 m_spawnLocation({ 0.f, 0.f }),
-m_doorTileIndices({ 0, 0 })
+m_doorTileIndices({ 0, 0 }),
+m_context(context)
 {
 	// Load all tiles.
 	AddTile("../resources/tiles/spr_tile_floor.png", TILE::FLOOR);
@@ -531,11 +533,20 @@ void Level::SpawnTorches(int torchCount)
 			{
 				if (std::find(usedTiles.begin(), usedTiles.end(), tile) == usedTiles.end())
 				{
-					std::shared_ptr<Torch> torch = std::make_shared<Torch>();
+					std::shared_ptr<Object> torch = std::make_shared<Object>();
+					torch->SetContext(m_context);
+					
 					torch->m_transform->SetPosition(GetActualTileLocation(columnIndex, rowIndex));
-					//TODO: this should not be necessary. sprite should read location data directly.
-					//torch->GetComponent<C_Sprite>()->GetSprite().setPosition(GetActualTileLocation(columnIndex, rowIndex));
+					
+					auto sprite = torch->AddComponent<C_AnimatedSprite>();
+					//TODO: cache sprite.
+					int textureID = TextureManager::AddTexture("../resources/spr_torch.png");
+					sprite->SetSprite(TextureManager::GetTexture(textureID), false, 5, 12);
+
+					torch->AddComponent<C_Torch>();
+
 					m_torches.push_back(torch);
+
 					tileFound = true;
 				}
 			}
@@ -564,7 +575,7 @@ int Level::GetTileSize() const
 }
 
 // Gets a vector of all torches in the level.
-std::vector<std::shared_ptr<Torch>>* Level::GetTorches()
+std::vector<std::shared_ptr<Object>>* Level::GetTorches()
 {
 	return &m_torches;
 }
@@ -585,11 +596,14 @@ void Level::Draw(sf::RenderWindow& window, float timeDelta)
 	// Draw all torches.
 	for (auto& torch : m_torches)
 	{
-		auto sprite = torch->GetComponent<C_AnimatedSprite>();
+		torch->Draw(window, timeDelta);
+	}
+}
 
-		if (sprite)
-		{
-			sprite->Draw(window, timeDelta);
-		}
+void Level::Update(float timeDelta)
+{
+	for (auto& torch : m_torches)
+	{
+		torch->Update(timeDelta);
 	}
 }

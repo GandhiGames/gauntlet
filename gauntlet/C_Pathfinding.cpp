@@ -5,11 +5,9 @@
 
 
 C_Pathfinding::C_Pathfinding() : Component(true), 
-m_currentTarget({ 0.f, 0.f }),
-m_speed(0),
-m_velocity({ 0.f, 0.f })
+m_currentTarget({ 0.f, 0.f })
 {
-	m_speed = rand() % 51 + 150;
+
 }
 
 
@@ -17,20 +15,28 @@ C_Pathfinding::~C_Pathfinding()
 {
 }
 
-void C_Pathfinding::Update(float deltaTime)
+void C_Pathfinding::LoadDependencies(Object* owner)
+{
+	m_movement = owner->GetComponent<C_Movement>();
+	m_transform = owner->GetComponent<C_Transform>();
+}
+
+void C_Pathfinding::Update(float deltaTime, Object* owner)
 {
 	sf::Vector2f* targetLocation = GetNextPosition();
 
 	// Move towards current target location.
 	if (targetLocation)
 	{
-		m_velocity = sf::Vector2f(targetLocation->x - m_transform->GetPosition().x,
+		const sf::Vector2f velocity = sf::Vector2f(targetLocation->x - m_transform->GetPosition().x,
 			targetLocation->y - m_transform->GetPosition().y);
 
-		if (abs(m_velocity.x) < 10.f && abs(m_velocity.y) < 10.f)
+		if (abs(velocity.x) < 10.f && abs(velocity.y) < 10.f)
 		{
+			m_movement->SetVelocity(velocity);
 			RemoveFirst();
 		}
+		/*
 		else
 		{
 			float length = sqrt(m_velocity.x * m_velocity.x + m_velocity.y * m_velocity.y);
@@ -41,18 +47,8 @@ void C_Pathfinding::Update(float deltaTime)
 				m_transform->GetPosition().x + m_velocity.x * (m_speed * deltaTime),
 				m_transform->GetPosition().y + m_velocity.y * (m_speed * deltaTime));
 		}
+		*/
 	}
-}
-
-void C_Pathfinding::LoadDependencies(Object* owner)
-{
-	m_transform = owner->m_transform;
-}
-
-//TODO: move to a C_Moveable component? Have transform own velocity?
-const sf::Vector2f& C_Pathfinding::GetVelocity() const
-{
-	return m_velocity;
 }
 
 void C_Pathfinding::Calculate(Level& level, sf::Vector2f target)

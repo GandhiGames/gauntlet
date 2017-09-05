@@ -14,7 +14,6 @@
 #include "Entity.h"
 #include "Input.h"
 #include "Level.h"
-#include "Projectile.h"
 
 class Player : public Entity
 {

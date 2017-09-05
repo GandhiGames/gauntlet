@@ -1,18 +1,19 @@
 #pragma once
 
-#include "Component.h"
+#include "C_Drawable.h"
+#include "C_Updateable.h"
 #include "C_Transform.h"
 
 //TODO: create animation component
-class C_StaticSprite : public Component
+class C_StaticSprite : public Component, public C_Drawable, public C_Updateable
 {
 public:
 	C_StaticSprite();
 	~C_StaticSprite();
 
-	void LoadDependencies(Object* owner);
+	void LoadDependencies(Object* owner) override;
 
-	void Update(float deltaTime);
+	void Update(float deltaTime, Object* owner) override;
 
 	/**
 	* Draws the object to the screen at its current position.

@@ -22,7 +22,7 @@ void Entity::Update(float timeDelta)
 	// Choose animation state.
 	ANIMATION_STATE animState = static_cast<ANIMATION_STATE>(m_currentTextureIndex);
 
-	const sf::Vector2f& velocity = GetComponent<C_Pathfinding>()->GetVelocity();
+	const sf::Vector2f& velocity = GetComponent<C_Movement>()->GetVelocity();
 
 	if ((velocity.x != 0) || (velocity.y != 0))
 	{

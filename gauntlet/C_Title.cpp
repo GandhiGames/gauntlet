@@ -1,6 +1,6 @@
 #include "PCH.h"
 #include "C_Title.h"
-
+#include "Object.h"
 
 C_Title::C_Title() : Component(true),
 	m_name(""),
@@ -17,6 +17,11 @@ C_Title::C_Title() : Component(true),
 
 C_Title::~C_Title()
 {
+}
+
+void C_Title::LoadDependencies(Object* owner)
+{
+	m_transform = owner->m_transform;
 }
 
 // Gets the name of the item.
@@ -41,8 +46,9 @@ void C_Title::Set(std::string name)
 	m_textOffset = sf::Vector2f(m_text.getLocalBounds().width / 2, m_text.getLocalBounds().height / 2);
 }
 
-void C_Title::Draw(sf::RenderWindow& window, const sf::Vector2f& pos)
+void C_Title::Draw(sf::RenderWindow& window, float timeDelta)
 {
+	const sf::Vector2f& pos = m_transform->GetPosition();
 	m_text.setPosition(pos.x - m_textOffset.x, (pos.y - 30.f) - m_textOffset.y);
 	window.draw(m_text);
 }

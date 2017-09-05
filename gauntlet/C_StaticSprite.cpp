@@ -2,6 +2,7 @@
 #include "C_StaticSprite.h"
 #include "Object.h"
 
+//TODO: shouldn't need to set unique on both drawable and updateable
 C_StaticSprite::C_StaticSprite() : Component(true)
 {
 	
@@ -18,7 +19,7 @@ void C_StaticSprite::LoadDependencies(Object* owner)
 	m_transform = owner->m_transform;
 }
 
-void C_StaticSprite::Update(float deltaTime)
+void C_StaticSprite::Update(float deltaTime, Object* owner)
 {
 	m_sprite.setPosition(m_transform->GetPosition());
 }

@@ -1,10 +1,11 @@
 #include "PCH.h"
 #include "ItemFactory.h"
-#include "Item.h"
 
-std::unique_ptr<Item> ItemFactory::CreateInstance(ITEM type)
+std::unique_ptr<Object> ItemFactory::CreateInstance(ITEM type)
 {
-	Item item;
+	Object item;
+	item.AddComponent<C_AnimatedSprite>();
+	item.AddComponent<C_ItemType>();
 
 	switch (type)
 	{
@@ -44,7 +45,7 @@ std::unique_ptr<Item> ItemFactory::CreateInstance(ITEM type)
 		item.GetComponent<C_AnimatedSprite>()->SetSprite(TextureManager::GetTexture(TextureManager::AddTexture(spriteFilePath)), false, 8, 12);
 
 		//TODO: move to component?
-		item.SetType(ITEM::POTION);
+		item.GetComponent<C_ItemType>()->Set(ITEM::POTION);
 
 		break;
 	}
@@ -52,7 +53,7 @@ std::unique_ptr<Item> ItemFactory::CreateInstance(ITEM type)
 	{
 		item.GetComponent<C_AnimatedSprite>()->SetSprite(TextureManager::GetTexture(TextureManager::AddTexture("../resources/loot/gem/spr_pickup_gem.png")), false, 8, 12);
 		item.AddComponent<C_PointsOnPickup>()->SetValue(std::rand() % 100);
-		item.SetType(ITEM::GEM);
+		item.GetComponent<C_ItemType>()->Set(ITEM::GEM);
 
 		break;
 	}
@@ -82,7 +83,7 @@ std::unique_ptr<Item> ItemFactory::CreateInstance(ITEM type)
 		item.GetComponent<C_AnimatedSprite>()->SetSprite(TextureManager::GetTexture(textureID), false, 8, 12);
 
 		// Set the item type.
-		item.SetType(ITEM::GOLD);
+		item.GetComponent<C_ItemType>()->Set(ITEM::GOLD);
 
 		break;
 	}
@@ -94,7 +95,7 @@ std::unique_ptr<Item> ItemFactory::CreateInstance(ITEM type)
 		auto title = item.AddComponent<C_Title>();
 		title->Set("Key");
 
-		item.SetType(ITEM::KEY);
+		item.GetComponent<C_ItemType>()->Set(ITEM::KEY);
 		break;
 	}
 	case ITEM::HEART:
@@ -103,11 +104,11 @@ std::unique_ptr<Item> ItemFactory::CreateInstance(ITEM type)
 
 		item.AddComponent<C_PointsOnPickup>()->SetValue(std::rand() % 11 + 10);
 
-		item.SetType(ITEM::HEART);
+		item.GetComponent<C_ItemType>()->Set(ITEM::HEART);
 
 		break;
 	}
 	}
 
-	return std::make_unique<Item>(item);
+	return std::make_unique<Object>(item);
 }

@@ -28,9 +28,12 @@ std::unique_ptr<Entity> EntityFactory::Create(ENEMY type, SharedContext* context
 	{
 	case ENEMY::SLIME:
 	{
+		return nullptr;
+
 		Entity instance;
 
 		instance.GetComponent<C_Tag>()->Set(ENEMY_TAG);
+		instance.AddComponent<C_Movement>();
 		instance.AddComponent<C_AnimatedSprite>();
 		instance.AddComponent<C_SpawnItemsOnDeath>();
 		instance.AddComponent<C_PlaySoundOnDeath>();
@@ -85,6 +88,7 @@ std::unique_ptr<Entity> EntityFactory::Create(ENEMY type, SharedContext* context
 		Humanoid instance;
 
 		instance.GetComponent<C_Tag>()->Set(ENEMY_TAG);
+		instance.AddComponent<C_Movement>();
 		instance.AddComponent<C_AnimatedSprite>();
 		instance.AddComponent<C_SpawnItemsOnDeath>();
 		instance.AddComponent<C_PlaySoundOnDeath>();

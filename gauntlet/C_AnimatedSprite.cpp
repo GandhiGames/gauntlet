@@ -24,7 +24,7 @@ void C_AnimatedSprite::LoadDependencies(Object* owner)
 	m_transform = owner->m_transform;
 }
 
-void C_AnimatedSprite::Update(float deltaTime)
+void C_AnimatedSprite::Update(float deltaTime, Object* owner)
 {
 	m_sprite.setPosition(m_transform->GetPosition());
 }

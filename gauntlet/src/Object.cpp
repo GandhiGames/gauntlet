@@ -10,12 +10,23 @@ Object::Object()
 	m_tag = AddComponent<C_Tag>();
 }
 
-//TODO: remove need for timeDelta
 void Object::Update(float timeDelta)
 {
-	for (std::shared_ptr<Component> component : m_components)
+	//TODO: cache updateables
+	auto updateables = GetComponents<C_Updateable>();
+	for (const auto& component : updateables)
 	{
-		component->Update(timeDelta);
+		component->Update(timeDelta, this);
+	}
+}
+
+void Object::Draw(sf::RenderWindow &window, float timeDelta)
+{
+	//TODO: cache drawables
+	auto drawables = GetComponents<C_Drawable>();
+	for (const auto& component : drawables)
+	{
+		component->Draw(window, timeDelta);
 	}
 }
 
@@ -31,8 +42,19 @@ SharedContext* Object::GetContext()
 
 void Object::Destroy()
 {
-	return;
 	//TODO: check actually removes correct/any enemy from list! (because it probably does not!)
+	//TODO: only removes object if contained in enemy list, should remove regardless of list (create global list)
+	/*
+	for (const auto& obj : *m_context->m_enemies)
+	{
+		if (obj->m_instanceID->Get() == m_instanceID->Get())
+		{
+			m_context->m_enemies->erase(obj);
+			break;
+		}
+	}
+	*/
+	
 	auto it = m_context->m_enemies->begin();
 	while (it != m_context->m_enemies->end())
 	{
@@ -43,5 +65,7 @@ void Object::Destroy()
 			m_context->m_enemies->erase(it);
 			break;
 		}
+
+		++it;
 	}
 }

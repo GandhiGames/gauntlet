@@ -17,7 +17,7 @@ C_ProjectileAttack::~C_ProjectileAttack()
 
 void C_ProjectileAttack::LoadDependencies(Object* owner)
 {
-	m_transform = owner->GetComponent<C_Transform>();
+	m_transform = owner->m_transform;
 	m_mana = owner->GetComponent<C_Mana>();
 
 	Player* player = (Player*)owner;
@@ -39,30 +39,41 @@ void C_ProjectileAttack::LoadDependencies(Object* owner)
 		break;
 	}
 
-	m_context = owner->GetContext();
-
-	m_screenCenter = { m_context->m_window->getSize().x / 2.f, m_context->m_window->getSize().y / 2.f };
 }
 
-void C_ProjectileAttack::Update(float deltaTime)
+void C_ProjectileAttack::Update(float deltaTime, Object* owner)
 {
+	SharedContext* context = owner->GetContext();
+	assert(context);
+
 	auto projectileIterator = m_playerProjectiles.begin();
 	while (projectileIterator != m_playerProjectiles.end())
 	{
 		// Get the projectile object from the iterator.
-		Projectile& projectile = **projectileIterator;
+		Object& projectile = **projectileIterator;
 
 		// Get the tile that the projectile is on.
-		TILE projectileTileType = m_context->m_level->GetTile(projectile.m_transform->GetPosition())->type;
-
-		// If the tile the projectile is on is not floor, delete it.
-		if ((projectileTileType != TILE::FLOOR) && (projectileTileType != TILE::FLOOR_ALT))
+		Tile* projectileTile = context->m_level->GetTile(projectile.m_transform->GetPosition());
+		
+		if (projectileTile != nullptr)
 		{
-			projectileIterator = m_playerProjectiles.erase(projectileIterator);
+ 			TILE projectileTileType = projectileTile->type;
+
+			// If the tile the projectile is on is not floor, delete it.
+			if ((projectileTileType != TILE::FLOOR) && (projectileTileType != TILE::FLOOR_ALT))
+			{
+				projectileIterator = m_playerProjectiles.erase(projectileIterator);
+			}
+			else
+			{
+				// Update the projectile and move to the next one.
+				projectile.Update(deltaTime);
+				++projectileIterator;
+			}
 		}
 		else
 		{
-			// Update the projectile and move to the next one.
+			//TODO: remove perception.
 			projectile.Update(deltaTime);
 			++projectileIterator;
 		}
@@ -75,10 +86,28 @@ void C_ProjectileAttack::Update(float deltaTime)
 			int curMana = m_mana->GetCurrent();
 			if (curMana >= 2)
 			{
+				//TODO: cache screenCentre.
+				sf::Vector2f m_screenCenter = { context->m_window->getSize().x / 2.f, context->m_window->getSize().y / 2.f };
+
+				//TODO: move to object pool.
 				sf::Vector2f target(static_cast<float>(sf::Mouse::getPosition().x), static_cast<float>(sf::Mouse::getPosition().y));
-				std::unique_ptr<Projectile> proj = std::make_unique<Projectile>(TextureManager::GetTexture(m_projectileTextureID), 
-					m_transform->GetPosition(), m_screenCenter, target);
-				proj->SetContext(m_context);
+				std::unique_ptr<Object> proj = std::make_unique<Object>();
+				proj->SetContext(context);
+
+				auto sprite = proj->AddComponent<C_StaticSprite>();
+				//TODO: cache texture get.
+				sprite->SetSprite(TextureManager::GetTexture(m_projectileTextureID));
+
+				auto projComp = proj->AddComponent<C_Projectile>();
+				projComp->Initialise(m_screenCenter, target);
+
+				proj->m_tag->Set(PROJECTILE_TAG);
+				proj->m_transform->SetPosition(m_transform->GetPosition());
+
+				auto dmg = proj->AddComponent<C_CollisionDamage>();
+				dmg->SetDamageAmount(25);
+				dmg->SetTargetTag(ENEMY_TAG);
+
 				m_playerProjectiles.push_back(std::move(proj));
 				m_mana->SetCurrent(curMana - 2);
 

@@ -13,18 +13,12 @@ public:
 
 	virtual void LoadDependencies(Object* owner){}
 
-	//TODO: create drawable component.
-	virtual void Draw(sf::RenderWindow &window, float timeDelta) {}
-
-	virtual void Update(float deltaTime){}
-
 	bool RequiresUnique()
 	{
 		return m_unique;
 	}
 
 protected:
-	//Object* m_owner;
 	bool m_unique;
 };
 

@@ -23,7 +23,7 @@ Game::Game(sf::RenderWindow* window) :
 	m_screenCenter = { m_window.getSize().x / 2.f, m_window.getSize().y / 2.f };
 
 	// Create the level object.
-	m_level = Level(*window);
+	m_level = Level(*window, &m_context);
 
 	// Create the game font.
 	m_font.loadFromFile("../resources/fonts/ADDSBP__.TTF");
@@ -37,11 +37,14 @@ Game::Game(sf::RenderWindow* window) :
 	m_music.play();
 
 	m_player.GetComponent<C_Tag>()->Set(PLAYER_TAG);
+	m_player.AddComponent<C_ProjectileAttack>();
+	m_player.SetContext(&m_context);
 
 	m_context.m_enemies = &m_enemies;
 	m_context.m_level = &m_level;
 	m_context.m_items = &m_items;
 	m_context.m_window = &m_window;
+	m_context.m_lightGrid = &m_lightGrid;
 }
 
 // Initializes the game.
@@ -385,8 +388,6 @@ void Game::Update(float timeDelta)
 
 	case GAME_STATE::PLAYING:
 	{
-
-
 		//TODO: cache get component call.
 		sf::Vector2i mousePos = sf::Mouse::getPosition();
 
@@ -436,10 +437,10 @@ void Game::Update(float timeDelta)
 			if (!torches->empty())
 			{
 				// Store the first torch as the current closest.
-				std::shared_ptr<Torch> nearestTorch = torches->front();
+				std::shared_ptr<Object> nearestTorch = torches->front();
 				float lowestDistanceToPlayer = DistanceBetweenPoints(playerPosition, nearestTorch->m_transform->GetPosition());
 
-				for (std::shared_ptr<Torch> torch : *torches)
+				for (std::shared_ptr<Object> torch : *torches)
 				{
 					// Get the distance to the player.
 					float distanceToPlayer = DistanceBetweenPoints(playerPosition, torch->m_transform->GetPosition());
@@ -484,15 +485,17 @@ void Game::Update(float timeDelta)
 	}
 }
 
-// Updates the level light.
+//TODO: fix fixed player light outline.
 void Game::UpdateLight(sf::Vector2f playerPosition, float timeDelta)
 {
+	m_level.Update(timeDelta);
+
 	for (sf::Sprite& sprite : m_lightGrid)
 	{
-		float tileAlpha = 255.f;			// Tile alpha.
+		float tileAlpha = 255.f;
 		float distance = 0.f;				// The distance between player and tile.
 
-		// Calculate distance between tile and player.
+											// Calculate distance between tile and player.
 		distance = DistanceBetweenPoints(sprite.getPosition(), playerPosition);
 
 		// Calculate tile transparency.
@@ -505,35 +508,13 @@ void Game::UpdateLight(sf::Vector2f playerPosition, float timeDelta)
 			tileAlpha = (51.f * (distance - 200.f)) / 10.f;
 		}
 
-		// Get all torches from the level.
-		auto torches = m_level.GetTorches();
-
-		// If there are torches.
-		if (!torches->empty())
+		if (tileAlpha != 255.f)
 		{
-			// Update the light surrounding each torch.
-			for (std::shared_ptr<Torch> torch : *torches)
-			{
-				torch->Update(timeDelta);
-				// If the light tile is within range of the torch.
-				distance = DistanceBetweenPoints(sprite.getPosition(), torch->m_transform->GetPosition());
-				if (distance < 100.f)
-				{
-					// Edit its alpha.
-					tileAlpha -= (tileAlpha - ((tileAlpha / 100.f) * distance)) * torch->GetBrightness();
-				}
-			}
-
-			// Ensure alpha does not go negative.
-			if (tileAlpha < 0)
-			{
-				tileAlpha = 0;
-			}
+			sprite.setColor(sf::Color(255, 255, 255, static_cast<sf::Uint8>(tileAlpha)));
 		}
-
-		// Set the sprite transparency.
-		sprite.setColor(sf::Color(255, 255, 255, static_cast<sf::Uint8>(tileAlpha)));
 	}
+
+
 }
 
 // Spawns a given object type at a random location within the map. Has the option to explicitly set a spawn location.
@@ -553,7 +534,7 @@ void Game::SpawnItem(ITEM itemType, sf::Vector2f position)
 		spawnLocation = m_context.m_level->GetRandomSpawnLocation();
 	}
 
-	std::unique_ptr<Item> item = ItemFactory::CreateInstance(itemType);
+	std::unique_ptr<Object> item = ItemFactory::CreateInstance(itemType);
 	item->SetContext(&m_context);
 
 	// Set the item position.
@@ -563,7 +544,7 @@ void Game::SpawnItem(ITEM itemType, sf::Vector2f position)
 	m_items.push_back(std::move(item));
 }
 
-// Updates all items in the level.
+//TODO: add to global object list
 void Game::UpdateItems(sf::Vector2f playerPosition, float timeDelta)
 {
 	// Update all items.
@@ -571,14 +552,14 @@ void Game::UpdateItems(sf::Vector2f playerPosition, float timeDelta)
 	while (itemIterator != m_items.end())
 	{
 		// Get the item from the iterator.
-		Item& item = **itemIterator;
+		Object& item = **itemIterator;
 
 		item.Update(timeDelta);
 
 		if (DistanceBetweenPoints(item.m_transform->GetPosition(), playerPosition) < 40.f)
 		{
 			//TODO: convert to ActionOnPickUp Components
-			switch (item.GetType())
+			switch (item.GetComponent<C_ItemType>()->Get())
 			{
 			case ITEM::GOLD:
 			{
@@ -820,37 +801,17 @@ void Game::Draw(float timeDelta)
 		//TODO: create getcomponents that returns list of all components that match type. Use this to return all drawable.
 		for (const auto& item : m_items)
 		{
-			auto sprite = item->GetComponent<C_AnimatedSprite>();
-
-			if (sprite)
-			{
-				sprite->Draw(m_window, timeDelta);
-			}
-
-			auto title = item->GetComponent<C_Title>();
-
-			if (title)
-			{
-				title->Draw(m_window, item->m_transform->GetPosition());
-			}
+			item->Draw(m_window, timeDelta);
 		}
 
 		//TODO: Make this unneseccary by having components have a virtual draw method and sprite inherit it.
 		// then have one loop through all game objects and call draw on the object::draw.
 		for (const auto& enemy : m_enemies)
 		{
-			auto sprite = enemy->GetComponent<C_AnimatedSprite>();
-
-			if (sprite)
-			{
-				sprite->Draw(m_window, timeDelta);
-			}
+			enemy->Draw(m_window, timeDelta);
 		}
 
-
-
-		// Draw the player.
-		m_player.GetComponent<C_AnimatedSprite>()->Draw(m_window, timeDelta);
+		m_player.Draw(m_window, timeDelta);
 
 		// Draw level light.
 		for (const sf::Sprite& sprite : m_lightGrid)

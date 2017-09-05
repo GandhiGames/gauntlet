@@ -1,8 +1,9 @@
 #pragma once
 
+#include "C_Updateable.h"
 #include "C_Transform.h"
 
-class C_CollisionDamage : public Component
+class C_CollisionDamage : public Component, public C_Updateable
 {
 public:
 	C_CollisionDamage();
@@ -10,7 +11,7 @@ public:
 
 	void LoadDependencies(Object* owner) override;
 
-	void Update(float deltaTime) override;
+	void Update(float deltaTime, Object* owner) override;
 
 	void SetDamageAmount(int amount);
 	void SetTargetTag(std::string tag);
@@ -21,7 +22,6 @@ public:
 
 
 private:
-	Object* m_owner;
 	int m_damageAmount;
 	std::string m_targetTag;
 	std::shared_ptr<C_Transform> m_transform;

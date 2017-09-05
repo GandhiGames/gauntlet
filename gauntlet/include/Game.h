@@ -14,7 +14,6 @@
 #include "EntityFactory.h"
 #include "ItemFactory.h"
 #include "Player.h"
-#include "Item.h"
 #include "Level.h"
 #include "Humanoid.h"
 #include "SharedContext.h"
@@ -180,7 +179,7 @@ private:
 	/**
 	 * A vector that holds all items within the level.
 	 */
-	std::vector<std::unique_ptr<Item>> m_items;
+	std::vector<std::unique_ptr<Object>> m_items;
 
 	/**
 	 * A vector that holds all the enemies within the level.

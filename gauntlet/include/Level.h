@@ -11,7 +11,7 @@
 #ifndef LEVEL_H
 #define LEVEL_H
 
-#include "Torch.h"
+#include "SharedContext.h"
 
 // Constants for the game grid size.
 static int const GRID_WIDTH = 19;
@@ -34,6 +34,8 @@ struct Tile {
 
 class Level
 {
+	friend class Object;
+
 public:
 	/**
 	 * Default constructor.
@@ -45,7 +47,7 @@ public:
 	 * A renderWindow is needed in order for the level to calculate its position.
 	 * @param window The game window.
 	 */
-	Level(sf::RenderWindow& window);
+	Level(sf::RenderWindow& window, SharedContext* context);
 
 	/**
 	 * Returns true if the given tile index is solid.
@@ -70,6 +72,8 @@ public:
 	 * @param timeDelta The time that has elapsed since the last update.
 	 */
 	void Draw(sf::RenderWindow &window, float timeDelta);
+
+	void Update(float timeDelta);
 
 	/**
 	 * Gets the index of the given tile.
@@ -104,7 +108,7 @@ public:
 	 * Gets a vector of all torches in the level.
 	 * @return A vector of shared_ptrs containing all torches in the level.
 	 */
-	std::vector<std::shared_ptr<Torch>>* GetTorches();
+	std::vector<std::shared_ptr<Object>>* GetTorches();
 
 	/**
 	 * Checks if a given tile is valid.
@@ -243,6 +247,8 @@ private:
 	bool IsWall(int columnIndex, int rowIndex);
 
 private:
+
+	SharedContext* m_context;
 	/**
 	 * A 2D array that describes the level data.
 	 * The type is Tile, which holds a sprite and an index.
@@ -293,6 +299,6 @@ private:
 	/**
 	 * A vector of all tiles in the level.
 	 */
-	std::vector<std::shared_ptr<Torch>> m_torches;
+	std::vector<std::shared_ptr<Object>> m_torches;
 };
 #endif

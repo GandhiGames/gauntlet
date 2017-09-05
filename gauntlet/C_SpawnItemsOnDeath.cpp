@@ -15,12 +15,19 @@ C_SpawnItemsOnDeath::~C_SpawnItemsOnDeath()
 
 void C_SpawnItemsOnDeath::LoadDependencies(Object* owner)
 {
+	//TODO: re-implement below:
 	//owner->GetComponent<C_Health>()->PerformActionOnDeath(OnDeath);
-	m_transform = owner->m_transform;
 
-	//TODO: any component that wants context should store reference to owner instance of context as sometimes context will be set after 
-	// load dependencies is called causing an ordering issue.
-	m_owner = owner;
+	m_transform = owner->m_transform;
+}
+
+void C_SpawnItemsOnDeath::Update(float deltaTime, Object* owner)
+{
+	//TODO: get rid of this! remove update method completely!
+	if (owner && !m_owner)
+	{
+		m_owner = owner;
+	}
 }
 
 void C_SpawnItemsOnDeath::OnDeath()
@@ -51,29 +58,18 @@ void C_SpawnItemsOnDeath::OnDeath()
 	}
 }
 
-// Spawns a given object type at a random location within the map. Has the option to explicitly set a spawn location.
-void C_SpawnItemsOnDeath::SpawnItem(ITEM itemType, sf::Vector2f position)
+void C_SpawnItemsOnDeath::SpawnItem(ITEM itemType, 
+	sf::Vector2f position)
 {
-	int objectIndex = 0;
-
-	// Choose a random, unused spawn location.
-	sf::Vector2f spawnLocation;
 
 	SharedContext* context = m_owner->GetContext();
 
-	if ((position.x >= 0.f) || (position.y >= 0.f))
-	{
-		spawnLocation = position;
-	}
-	else
-	{
-		spawnLocation = context->m_level->GetRandomSpawnLocation();
-	}
+	int objectIndex = 0;
 
-	std::unique_ptr<Item> item = ItemFactory::CreateInstance(itemType);
+	std::unique_ptr<Object> item = ItemFactory::CreateInstance(itemType);
 	item->SetContext(context);
 
 	// Set the item position.
-	item->m_transform->SetPosition(spawnLocation);
+	item->m_transform->SetPosition(position);
 	context->m_items->push_back(std::move(item));
 }

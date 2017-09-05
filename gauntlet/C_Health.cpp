@@ -32,15 +32,15 @@ void C_Health::DoDamage(const int& damage)
 {
 	m_current -= damage;
 
-	if (m_current < 0)
+	if (m_current <= 0)
 	{
 		m_current = 0;
 
 		//TODO: uncomment when fixing.
 		//for (auto& f : m_deathListeners) { f(); }
-	}
 
-	m_owner->Destroy();
+		m_owner->Destroy();
+	}
 }
 
 void C_Health::PerformActionOnDeath(const Action& action)
