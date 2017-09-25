@@ -2,7 +2,7 @@
 
 #include "Component.h"
 
-//TODO: tody up bracket convention (below or besides!) { vs
+//TODO: tidy up bracket convention (below or besides!) { vs
 //{
 // find setting in vs to do it for me.
 
@@ -13,7 +13,7 @@
 class C_Transform : public Component
 {
 public:
-	C_Transform();
+	C_Transform(Object* owner);
 	~C_Transform();
 
 	/**
@@ -34,12 +34,18 @@ public:
 	*/
 	const sf::Vector2f& GetPosition() const;
 
-	//TODO: implement this, should set position relative to parent and be abloe to call transform.parent
-	void SetParent(C_Transform* parent);
+	void SetParent(std::shared_ptr<C_Transform> parent);
+	const std::shared_ptr<C_Transform> GetParent() const;
+
+	void AddChild(C_Transform* child);
+	const std::vector<C_Transform*>& GetChildren() const;
+
 
 private:
 	/**
 	* The position of the object in the game window.
 	*/
 	sf::Vector2f m_position;
+	std::shared_ptr<C_Transform> m_parent;
+	std::vector<C_Transform*> m_children;
 };

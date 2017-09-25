@@ -2,7 +2,7 @@
 #include "C_Defense.h"
 
 
-C_Defense::C_Defense() : C_BaseStat()
+C_Defense::C_Defense(Object* owner) : C_BaseStat(owner)
 {
 }
 

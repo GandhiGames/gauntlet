@@ -5,7 +5,7 @@
 class C_PlaySoundOnDeath : public Component
 {
 public:
-	C_PlaySoundOnDeath();
+	C_PlaySoundOnDeath(Object* owner);
 	~C_PlaySoundOnDeath();
 
 	void LoadDependencies(Object* owner) override;

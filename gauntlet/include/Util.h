@@ -24,13 +24,6 @@ enum class MUSIC_TRACK {
 	COUNT
 };
 
-// Game states.
-enum class GAME_STATE {
-	MAIN_MENU,
-	PLAYING,
-	GAME_OVER
-};
-
 // Enemy humanoid types.
 enum class HUMANOID {
 	GOBLIN,
@@ -117,4 +110,5 @@ enum class PLAYER_TRAIT {
 	STAMINA,
 	COUNT
 };
+
 #endif

@@ -4,10 +4,12 @@
 #include "Object.h"
 
 
-C_Pathfinding::C_Pathfinding() : Component(true), 
-m_currentTarget({ 0.f, 0.f })
+C_Pathfinding::C_Pathfinding(Object* owner) : Component(owner, true),
+m_currentTarget({ 0.f, 0.f }),
+m_speed(0),
+m_prevTargetTile(nullptr)
 {
-
+	m_speed = rand() % 51 + 150;
 }
 
 
@@ -23,35 +25,52 @@ void C_Pathfinding::LoadDependencies(Object* owner)
 
 void C_Pathfinding::Update(float deltaTime, Object* owner)
 {
+	SharedContext* context = owner->GetContext();
+	const sf::Vector2f& playerPos = context->m_player->m_transform->GetPosition();
+	Level* level = context->m_level;
+
+	Tile*curTile = level->GetTile(playerPos);
+
+	if (curTile != m_prevTargetTile)
+	{
+		m_prevTargetTile = curTile;
+
+		if (DistanceBetweenPoints(playerPos, owner->m_transform->GetPosition()) < 300.0f)
+		{
+			Calculate(context->m_level, playerPos);
+		}
+	}
+
+
+
 	sf::Vector2f* targetLocation = GetNextPosition();
 
 	// Move towards current target location.
 	if (targetLocation)
 	{
-		const sf::Vector2f velocity = sf::Vector2f(targetLocation->x - m_transform->GetPosition().x,
+		sf::Vector2f velocity = sf::Vector2f(targetLocation->x - m_transform->GetPosition().x,
 			targetLocation->y - m_transform->GetPosition().y);
 
-		if (abs(velocity.x) < 10.f && abs(velocity.y) < 10.f)
+		if (abs(velocity.x) < 10.f && abs(velocity.y) < 10.f) // Reached target.
 		{
-			m_movement->SetVelocity(velocity);
 			RemoveFirst();
 		}
-		/*
 		else
 		{
-			float length = sqrt(m_velocity.x * m_velocity.x + m_velocity.y * m_velocity.y);
-			m_velocity.x /= length;
-			m_velocity.y /= length;
+			float length = sqrt(velocity.x * velocity.x + velocity.y * velocity.y);
+			velocity.x /= length;
+			velocity.y /= length;
 
-			m_transform->SetPosition(
-				m_transform->GetPosition().x + m_velocity.x * (m_speed * deltaTime),
-				m_transform->GetPosition().y + m_velocity.y * (m_speed * deltaTime));
+			m_movement->SetVelocity((velocity * (float)m_speed * deltaTime));
 		}
-		*/
+	}
+	else
+	{
+		m_movement->SetVelocity(sf::Vector2f(0.f, 0.f));
 	}
 }
 
-void C_Pathfinding::Calculate(Level& level, sf::Vector2f target)
+void C_Pathfinding::Calculate(Level* level, const sf::Vector2f& target)
 {
 	// Create all variables.
 	std::vector<Tile*> openList;
@@ -61,11 +80,11 @@ void C_Pathfinding::Calculate(Level& level, sf::Vector2f target)
 	Tile* currentNode;
 
 	// Reset all nodes.
-	level.ResetNodes();
+	level->ResetNodes();
 
 	// Store the start and goal nodes.
-	Tile* startNode = level.GetTile(m_transform->GetPosition());
-	Tile* goalNode = level.GetTile(target);
+	Tile* startNode = level->GetTile(m_transform->GetPosition());
+	Tile* goalNode = level->GetTile(target);
 
 	// Check we have a valid path to find. If not we can just end the function as there's no path to find.
 	if (startNode == goalNode)
@@ -78,12 +97,12 @@ void C_Pathfinding::Calculate(Level& level, sf::Vector2f target)
 	}
 
 	// Pre-compute our H cost (estimated cost to goal) for each node.
-	for (int i = 0; i < level.GetSize().x; i++)
+	for (int i = 0; i < level->GetSize().x; i++)
 	{
-		for (int j = 0; j < level.GetSize().y; j++)
+		for (int j = 0; j < level->GetSize().y; j++)
 		{
 			int rowOffset, heightOffset;
-			Tile* node = level.GetTile(i, j);
+			Tile* node = level->GetTile(i, j);
 
 			heightOffset = abs(node->rowIndex - goalNode->rowIndex);
 			rowOffset = abs(node->columnIndex - goalNode->columnIndex);
@@ -122,31 +141,31 @@ void C_Pathfinding::Calculate(Level& level, sf::Vector2f target)
 		Tile* node;
 
 		// Top.
-		node = level.GetTile(currentNode->columnIndex, currentNode->rowIndex - 1);
-		if ((node != nullptr) && (level.IsFloor(*node)))
+		node = level->GetTile(currentNode->columnIndex, currentNode->rowIndex - 1);
+		if ((node != nullptr) && (level->IsFloor(*node)))
 		{
-			adjacentTiles.push_back(level.GetTile(currentNode->columnIndex, currentNode->rowIndex - 1));
+			adjacentTiles.push_back(level->GetTile(currentNode->columnIndex, currentNode->rowIndex - 1));
 		}
 
 		// Right.
-		node = level.GetTile(currentNode->columnIndex + 1, currentNode->rowIndex);
-		if ((node != nullptr) && (level.IsFloor(*node)))
+		node = level->GetTile(currentNode->columnIndex + 1, currentNode->rowIndex);
+		if ((node != nullptr) && (level->IsFloor(*node)))
 		{
-			adjacentTiles.push_back(level.GetTile(currentNode->columnIndex + 1, currentNode->rowIndex));
+			adjacentTiles.push_back(level->GetTile(currentNode->columnIndex + 1, currentNode->rowIndex));
 		}
 
 		// Bottom.
-		node = level.GetTile(currentNode->columnIndex, currentNode->rowIndex + 1);
-		if ((node != nullptr) && (level.IsFloor(*node)))
+		node = level->GetTile(currentNode->columnIndex, currentNode->rowIndex + 1);
+		if ((node != nullptr) && (level->IsFloor(*node)))
 		{
-			adjacentTiles.push_back(level.GetTile(currentNode->columnIndex, currentNode->rowIndex + 1));
+			adjacentTiles.push_back(level->GetTile(currentNode->columnIndex, currentNode->rowIndex + 1));
 		}
 
 		// Left.
-		node = level.GetTile(currentNode->columnIndex - 1, currentNode->rowIndex);
-		if ((node != nullptr) && (level.IsFloor(*node)))
+		node = level->GetTile(currentNode->columnIndex - 1, currentNode->rowIndex);
+		if ((node != nullptr) && (level->IsFloor(*node)))
 		{
-			adjacentTiles.push_back(level.GetTile(currentNode->columnIndex - 1, currentNode->rowIndex));
+			adjacentTiles.push_back(level->GetTile(currentNode->columnIndex - 1, currentNode->rowIndex));
 		}
 
 		// For all adjacent nodes.
@@ -214,7 +233,7 @@ void C_Pathfinding::Calculate(Level& level, sf::Vector2f target)
 	// Store the node locations as the enemies target locations.
 	for (Tile* tile : pathList)
 	{
-		m_targetPositions.push_back(level.GetActualTileLocation(tile->columnIndex, tile->rowIndex));
+		m_targetPositions.push_back(level->GetActualTileLocation(tile->columnIndex, tile->rowIndex));
 	}
 
 	// Reverse the target position as we read them from goal to origin and we need them the other way around.

@@ -7,7 +7,9 @@ class Component
 {
 	friend class Object;
 public:
-	Component(bool requireUnique) : m_unique(requireUnique){}
+	Component(Object* owner, bool requireUnique) : m_unique(requireUnique), m_owner(owner)
+	{
+	}
 	
 	~Component() {}
 
@@ -18,7 +20,13 @@ public:
 		return m_unique;
 	}
 
+public:
+	//TODO: getters/setters
+	Object* m_owner;
+
 protected:
 	bool m_unique;
+
+	
 };
 

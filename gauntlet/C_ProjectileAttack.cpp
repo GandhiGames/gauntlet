@@ -4,7 +4,7 @@
 #include "Player.h"
 #include "Object.h"
 
-C_ProjectileAttack::C_ProjectileAttack() : Component(true),
+C_ProjectileAttack::C_ProjectileAttack(Object* owner) : Component(owner, true),
 	m_projectileTextureID(0),
 	m_attackDelta(0.f),
 	m_isAttacking(false)
@@ -23,7 +23,7 @@ void C_ProjectileAttack::LoadDependencies(Object* owner)
 	Player* player = (Player*)owner;
 
 	//TODO: turn class into component
-	switch (player->GetClass())
+	switch (player->GetComponent<C_PlayerClass>()->Get())
 	{
 	case PLAYER_CLASS::ARCHER:
 		m_projectileTextureID = TextureManager::AddTexture("../resources/projectiles/spr_arrow.png");
@@ -44,41 +44,7 @@ void C_ProjectileAttack::LoadDependencies(Object* owner)
 void C_ProjectileAttack::Update(float deltaTime, Object* owner)
 {
 	SharedContext* context = owner->GetContext();
-	assert(context);
-
-	auto projectileIterator = m_playerProjectiles.begin();
-	while (projectileIterator != m_playerProjectiles.end())
-	{
-		// Get the projectile object from the iterator.
-		Object& projectile = **projectileIterator;
-
-		// Get the tile that the projectile is on.
-		Tile* projectileTile = context->m_level->GetTile(projectile.m_transform->GetPosition());
-		
-		if (projectileTile != nullptr)
-		{
- 			TILE projectileTileType = projectileTile->type;
-
-			// If the tile the projectile is on is not floor, delete it.
-			if ((projectileTileType != TILE::FLOOR) && (projectileTileType != TILE::FLOOR_ALT))
-			{
-				projectileIterator = m_playerProjectiles.erase(projectileIterator);
-			}
-			else
-			{
-				// Update the projectile and move to the next one.
-				projectile.Update(deltaTime);
-				++projectileIterator;
-			}
-		}
-		else
-		{
-			//TODO: remove perception.
-			projectile.Update(deltaTime);
-			++projectileIterator;
-		}
-	}
-
+	
 	if ((m_attackDelta += deltaTime) > 0.25f)
 	{
 		if (Input::IsKeyPressed(Input::KEY::KEY_ATTACK))
@@ -99,16 +65,15 @@ void C_ProjectileAttack::Update(float deltaTime, Object* owner)
 				sprite->SetSprite(TextureManager::GetTexture(m_projectileTextureID));
 
 				auto projComp = proj->AddComponent<C_Projectile>();
-				projComp->Initialise(m_screenCenter, target);
+				projComp->Initialise(m_screenCenter, target, 25, ENEMY_TAG);
 
 				proj->m_tag->Set(PROJECTILE_TAG);
 				proj->m_transform->SetPosition(m_transform->GetPosition());
 
-				auto dmg = proj->AddComponent<C_CollisionDamage>();
-				dmg->SetDamageAmount(25);
-				dmg->SetTargetTag(ENEMY_TAG);
+				
+				proj->AddComponent<C_DistanceBasedCollision>();
 
-				m_playerProjectiles.push_back(std::move(proj));
+				context->m_objects->push_back(std::move(proj));
 				m_mana->SetCurrent(curMana - 2);
 
 				m_attackDelta = 0.f;
@@ -117,15 +82,3 @@ void C_ProjectileAttack::Update(float deltaTime, Object* owner)
 	}
 }
 
-void C_ProjectileAttack::Draw(sf::RenderWindow &window, float timeDelta)
-{
-	for (const auto& proj : m_playerProjectiles)
-	{
-		auto sprite = proj->GetComponent<C_StaticSprite>();
-
-		if (sprite)
-		{
-			sprite->Draw(window, timeDelta);
-		}
-	}
-}

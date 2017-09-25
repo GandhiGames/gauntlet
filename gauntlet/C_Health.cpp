@@ -3,7 +3,7 @@
 #include "Object.h"
 
 //TODO: convert to basestat
-C_Health::C_Health() : C_Damageable(true),
+C_Health::C_Health(Object* owner) : Component(owner, true),
 	m_current(0),
 	m_max(0)
 {
@@ -13,9 +13,19 @@ C_Health::~C_Health()
 {
 }
 
-void C_Health::LoadDependencies(Object* owner)
+
+void C_Health::OnCollisionEnter(Object* owner, Object* other)
 {
-	m_owner = owner;
+	if (other->m_tag->Get() == PROJECTILE_TAG)
+	{
+		auto projectile = other->GetComponent<C_Projectile>();
+		auto targetTag = projectile->GetTargetTag();
+
+		if (targetTag == owner->m_tag->Get())
+		{
+			DoDamage(projectile->GetDamageAmount(), owner);
+		}
+	}
 }
 
 void C_Health::SetCurrent(const int& health)
@@ -28,7 +38,7 @@ void C_Health::SetCurrent(const int& health)
 	}
 }
 
-void C_Health::DoDamage(const int& damage)
+void C_Health::DoDamage(const int& damage, Object* owner)
 {
 	m_current -= damage;
 
@@ -36,19 +46,9 @@ void C_Health::DoDamage(const int& damage)
 	{
 		m_current = 0;
 
-		//TODO: uncomment when fixing.
-		//for (auto& f : m_deathListeners) { f(); }
-
-		m_owner->Destroy();
+  		owner->Destroy();
 	}
 }
-
-void C_Health::PerformActionOnDeath(const Action& action)
-{
-	//TODO: fix this! Not compiling m_deathListeners
-	//m_deathListeners.emplace_back(action);
-}
-
 
 /*
 void C_Health::SetMax(const int& max)

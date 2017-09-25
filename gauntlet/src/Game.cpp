@@ -4,15 +4,14 @@
 // Default constructor.
 Game::Game(sf::RenderWindow* window) :
 	m_window(*window),
-	m_gameState(GAME_STATE::PLAYING),
 	m_isRunning(true),
 	m_string(""),
 	m_screenSize({ 0, 0 }),
 	m_screenCenter({ 0, 0 }),
-	m_scoreTotal(0),
-	m_goldTotal(0),
-	m_playerPreviousTile(nullptr)
+	m_newLevelRequested(false)
 {
+	m_elapsed = m_clock.restart().asSeconds();
+
 	// Enable VSync.
 	m_window.setVerticalSyncEnabled(true);
 
@@ -37,14 +36,23 @@ Game::Game(sf::RenderWindow* window) :
 	m_music.play();
 
 	m_player.GetComponent<C_Tag>()->Set(PLAYER_TAG);
-	m_player.AddComponent<C_ProjectileAttack>();
 	m_player.SetContext(&m_context);
+	m_player.AddComponent<C_ProjectileAttack>();
+	m_player.AddComponent<C_PlayerTorch>();
+	m_player.AddComponent<C_Inventory>();
+	m_player.AddComponent<C_DistanceBasedCollision>();
+	m_player.AddComponent<C_EndLevelTileCollision>();
 
-	m_context.m_enemies = &m_enemies;
+	//m_context.m_enemies = &m_enemies;
+	//m_context.m_items = &m_items;
+	//m_context.m_projectiles = &m_projectiles;
+	m_context.m_newObjects = &m_newObjects;
+	m_context.m_objects = &m_objects;
 	m_context.m_level = &m_level;
-	m_context.m_items = &m_items;
 	m_context.m_window = &m_window;
 	m_context.m_lightGrid = &m_lightGrid;
+	m_context.m_player = &m_player;
+	m_context.m_game = this;
 }
 
 // Initializes the game.
@@ -59,6 +67,13 @@ void Game::Initialize()
 	// Generate a level.
 	GenerateLevel();
 
+	//Create object responsible for updating tourch sound.
+	Object torchSound;
+	//TODO: shouldn't need to remember to do this for objects!
+	torchSound.SetContext(&m_context);
+	torchSound.AddComponent<C_ClosestTorchSoundPosition>();
+	m_objects.push_back(std::make_unique<Object>(torchSound));
+
 	// Builds the light grid.
 	ConstructLightGrid();
 
@@ -69,14 +84,6 @@ void Game::Initialize()
 
 	// Load all game sounds.
 	int soundBufferId;
-
-	// Load torch sound.
-	soundBufferId = SoundBufferManager::AddSoundBuffer("../resources/sounds/snd_fire.wav");
-	m_fireSound.setBuffer(SoundBufferManager::GetSoundBuffer(soundBufferId));
-	m_fireSound.setLoop(true);
-	m_fireSound.setAttenuation(5.f);
-	m_fireSound.setMinDistance(80.f);
-	m_fireSound.play();
 
 	// Load gem pickup sound.
 	soundBufferId = SoundBufferManager::AddSoundBuffer("../resources/sounds/snd_gem_pickup.wav");
@@ -97,16 +104,46 @@ void Game::Initialize()
 	m_level.AddTile("../resources/tiles/spr_tile_floor_alt.png", TILE::FLOOR_ALT);
 
 	// Change a selection of random tiles to the cracked tile sprite.
-	SpawnRandomTiles(TILE::FLOOR_ALT, 15);
+	int rowIndex(0), columnIndex(0), tileIndex(0);
+	for (int i = 0; i < 15; i++)
+	{
+		// Declare the variables we need.
+		int columnIndex(0), rowIndex(0);
+
+		// Loop until we select a floor tile.
+		while (!m_level.IsFloor(columnIndex, rowIndex))
+		{
+			// Generate a random index for the row and column
+			columnIndex = std::rand() % GRID_WIDTH;
+			rowIndex = std::rand() % GRID_HEIGHT;
+		}
+
+		// Now we change the selected tile.
+		m_level.SetTile(columnIndex, rowIndex, TILE::FLOOR_ALT);
+	}
 
 	//TODO: create aim sprite as child object of player.
 	int textureID = TextureManager::AddTexture("../resources/ui/spr_aim.png");
+	
+	//Object aim;
 	auto aimSprite = m_aim.AddComponent<C_StaticSprite>();
 	aimSprite->GetSprite().setTexture(TextureManager::GetTexture(textureID));
 	aimSprite->GetSprite().setOrigin(sf::Vector2f(16.5f, 16.5f));
 	aimSprite->GetSprite().setScale(2.f, 2.f);
-}
+	m_aim.AddComponent<C_CentreOnMousePosition>();
 
+	Object aim;
+	auto aimSprite2 = aim.AddComponent<C_StaticSprite>();
+	aimSprite2->GetSprite().setTexture(TextureManager::GetTexture(textureID));
+	aimSprite2->GetSprite().setOrigin(sf::Vector2f(16.5f, 16.5f));
+	aimSprite2->GetSprite().setScale(2.f, 2.f);
+	aim.AddComponent<C_CentreOnMousePosition>();
+	m_objects.push_back(std::make_unique<Object>(aim));
+	//aim.m_transform->SetParent(m_player.m_transform);
+	//aim.m_transform->SetPosition(sf::Vector2f(1.f, 1.f));
+	//m_objects.push_back(std::make_unique<Object>(aim));
+}
+	
 // Constructs the grid of sprites that are used to draw the game light system.
 void Game::ConstructLightGrid()
 {
@@ -190,7 +227,7 @@ void Game::LoadUI()
 	m_manaBarSprite->setOrigin(sf::Vector2f(barTextureOrigin.x, barTextureOrigin.y));
 
 	m_playerUiSprite = std::make_shared<sf::Sprite>();
-	m_playerUiSprite->setTexture(TextureManager::GetTexture(m_playerUiTextureIDs[static_cast<int>(m_player.GetClass())]));
+	m_playerUiSprite->setTexture(TextureManager::GetTexture(m_playerUiTextureIDs[static_cast<int>(m_player.GetComponent<C_PlayerClass>()->Get())]));
 	m_playerUiSprite->setPosition(sf::Vector2f(45.f, 45.f));
 	m_playerUiSprite->setOrigin(sf::Vector2f(30.f, 30.f));
 	m_uiSprites.push_back(m_playerUiSprite);
@@ -297,6 +334,11 @@ void Game::LoadUI()
 	}
 }
 
+void Game::RequestNewLevel()
+{
+	m_newLevelRequested = true;
+}
+
 // Generates a new level.
 void Game::GenerateLevel()
 {
@@ -305,12 +347,17 @@ void Game::GenerateLevel()
 
 	// Add a key to the level.
 	SpawnItem(ITEM::KEY);
+	assert(m_objects[0]->m_transform->m_owner != nullptr);
 
 	// Populate the level with items.
-	PopulateLevel();
+//	PopulateLevel();
+
+	assert(m_objects[0]->m_transform->m_owner != nullptr);
 
 	// Moves the player to the start.
 	m_player.m_transform->SetPosition(m_level.SpawnLocation());
+
+	m_keyUiSprite->setColor(sf::Color(255, 255, 255, 60));
 }
 
 // Populate the level with items.
@@ -330,7 +377,34 @@ void Game::PopulateLevel()
 	{
 		if (std::rand() % 2)
 		{
-			SpawnEnemy(static_cast<ENEMY>(std::rand() % static_cast<int>(ENEMY::COUNT)));
+			ENEMY enemyType = static_cast<ENEMY>(std::rand() % static_cast<int>(ENEMY::COUNT));
+
+			//TODO: do not spawn enemies outside of map!
+			sf::Vector2f position = { -1.f, -1.f };
+
+			sf::Vector2f spawnLocation;
+
+			// Choose a random, unused spawn location.
+			if ((position.x >= 0.f) || (position.y >= 0.f))
+				spawnLocation = position;
+			else
+				spawnLocation = m_level.GetRandomSpawnLocation();
+
+			// Create the enemy.
+			std::unique_ptr<Object> enemy = EntityFactory::GetInstance()->Create(enemyType, &m_context);
+
+			//TODO: do we need this check? should't it always return an enemy?
+			if (enemy)
+			{
+				enemy->SetContext(&m_context);
+
+				// Set spawn location.
+				enemy->m_transform->SetPosition(spawnLocation);
+
+				// Add to list of all enemies.
+				//m_enemies.push_back(std::move(enemy));
+			//	m_objects.push_back(std::move(enemy));
+			}
 		}
 	}
 }
@@ -341,180 +415,233 @@ bool Game::IsRunning()
 	return m_isRunning;
 }
 
-// Main game loop.
-void Game::Run()
+// Updates the game.
+void Game::Update()
 {
-	float currentTime = m_timestepClock.restart().asSeconds();
-	float timeDelta = 0.f;
-
-	// Loop until there is a quite message from the window or the user pressed escape.
-	while (m_isRunning)
+	// Check if the game was closed.
+	sf::Event event;
+	if (m_window.pollEvent(event))
 	{
-		// Check if the game was closed.
-		sf::Event event;
-		if (m_window.pollEvent(event))
+		if ((event.type == sf::Event::Closed) || (Input::IsKeyPressed(Input::KEY::KEY_ESC)))
 		{
-			if ((event.type == sf::Event::Closed) || (Input::IsKeyPressed(Input::KEY::KEY_ESC)))
-			{
-				m_window.close();
-				return;
-			}
+			m_isRunning = false;
+			m_window.close();
+			return;
 		}
-
-		float newTime = m_timestepClock.getElapsedTime().asSeconds();
-		float frameTime = std::max(0.f, newTime - currentTime);
-		currentTime = newTime;
-
-		// Update all items in the level.
-		Update(frameTime);
-
-		// Draw all items in the level.
-		Draw(frameTime);
 	}
 
-	// Shut the game down.
-	m_window.close();
+	// Update the player.
+	m_player.Update(m_elapsed, m_level);
+	m_aim.Update(m_elapsed);
+
+	for (const auto& obj : m_objects)
+	{
+		obj->Update(m_elapsed);
+	}
+
+	// Update level light.
+	//TODO: fix fixed player light outline.
+	m_level.Update(m_elapsed);
+
+	sf::Vector2f playerPosition = m_player.m_transform->GetPosition();
+
+	// Center the view.
+	m_views[static_cast<int>(VIEW::MAIN)].setCenter(playerPosition);
 }
 
-// Updates the game.
-void Game::Update(float timeDelta)
+//TODO: implement off-screen culling
+void Game::Draw()
 {
-	// Check what state the game is in.
-	switch (m_gameState)
+	// Clear the screen.
+	m_window.clear(sf::Color(3, 3, 3, 225));		// Grey
+
+		// Set the main game view.
+	m_window.setView(m_views[static_cast<int>(VIEW::MAIN)]);
+
+	// Draw the level.
+	m_level.Draw(m_window, m_elapsed);
+
+	//std::sort(m_objects.begin(), m_objects.end(),
+		//[](Object const& a, Object const& b) { return a.get < b.v; });
+
+	for (const auto& obj : m_objects)
 	{
-	case GAME_STATE::MAIN_MENU:
-		// Main menu code ...
-		break;
+		obj->Draw(m_window, m_elapsed);
+	}
 
-	case GAME_STATE::PLAYING:
+	m_player.Draw(m_window, m_elapsed);
+
+	// Draw level light.
+	for (const sf::Sprite& sprite : m_lightGrid)
 	{
-		//TODO: cache get component call.
-		sf::Vector2i mousePos = sf::Mouse::getPosition();
+		m_window.draw(sprite);
+	}
 
-		m_aim.m_transform->SetPosition((float)mousePos.x, (float)mousePos.y);
+	// Switch to UI view.
+	m_window.setView(m_views[static_cast<int>(VIEW::UI)]);
 
-		// First check if the player is at the exit. If so there's no need to update anything.
-		Tile& playerTile = *m_level.GetTile(m_player.m_transform->GetPosition());
+	m_aim.Draw(m_window, m_elapsed);
 
-		if (playerTile.type == TILE::WALL_DOOR_UNLOCKED)
+	// Draw player stats.
+	//TODO: cache components.
+	DrawString(std::to_string(m_player.GetComponent<C_Attack>()->GetValue()), sf::Vector2f(m_screenCenter.x - 210.f, m_screenSize.y - 30.f), 25);
+	DrawString(std::to_string(m_player.GetComponent<C_Defense>()->GetValue()), sf::Vector2f(m_screenCenter.x - 90.f, m_screenSize.y - 30.f), 25);
+	DrawString(std::to_string(m_player.GetComponent<C_Strength>()->GetValue()), sf::Vector2f(m_screenCenter.x + 30.f, m_screenSize.y - 30.f), 25);
+	DrawString(std::to_string(m_player.GetComponent<C_Dexterity>()->GetValue()), sf::Vector2f(m_screenCenter.x + 150.f, m_screenSize.y - 30.f), 25);
+	DrawString(std::to_string(m_player.GetComponent<C_Dexterity>()->GetValue()), sf::Vector2f(m_screenCenter.x + 270.f, m_screenSize.y - 30.f), 25);
+
+	// Draw player score.
+	std::string scoreString;
+
+	int scoreTotal = m_player.GetComponent<C_Inventory>()->m_score;
+
+	//TODO: convert to string format
+	if (scoreTotal > 99999)
+	{
+		scoreString = std::to_string(scoreTotal);
+	}
+	else if (scoreTotal > 9999)
+	{
+		scoreString = "0" + std::to_string(scoreTotal);
+	}
+	else if (scoreTotal > 999)
+	{
+		scoreString = "00" + std::to_string(scoreTotal);
+	}
+	else if (scoreTotal > 99)
+	{
+		scoreString = "000" + std::to_string(scoreTotal);
+	}
+	else if (scoreTotal > 9)
+	{
+		scoreString = "0000" + std::to_string(scoreTotal);
+	}
+	else
+	{
+		scoreString = "00000" + std::to_string(scoreTotal);
+	}
+
+	DrawString(scoreString, sf::Vector2f(m_screenCenter.x - 120.f, 40.f), 40);
+
+	// Draw gold total.
+	std::string goldString;
+	int goldTotal = m_player.GetComponent<C_Inventory>()->m_gold;
+
+	if (goldTotal > 99999)
+	{
+		goldString = std::to_string(goldTotal);
+	}
+	else if (goldTotal > 9999)
+	{
+		goldString = "0" + std::to_string(goldTotal);
+	}
+	else if (goldTotal > 999)
+	{
+		goldString = "00" + std::to_string(goldTotal);
+	}
+	else if (goldTotal > 99)
+	{
+		goldString = "000" + std::to_string(goldTotal);
+	}
+	else if (goldTotal > 9)
+	{
+		goldString = "0000" + std::to_string(goldTotal);
+	}
+	else
+	{
+		goldString = "00000" + std::to_string(goldTotal);
+	}
+
+	DrawString(goldString, sf::Vector2f(m_screenCenter.x + 220.f, 40.f), 40);
+
+	// Draw rest of the UI.
+	for (const auto& sprite : m_uiSprites)
+	{
+		m_window.draw(*sprite);
+	}
+
+	// Draw the current room and floor.
+	DrawString("Floor " + std::to_string(m_level.GetFloorNumber()), sf::Vector2f(70.f, m_screenSize.y - 65.f), 25);
+	DrawString("Room " + std::to_string(m_level.GetRoomNumber()), sf::Vector2f(70.f, m_screenSize.y - 30.f), 25);
+
+	// Draw health and mana bars.
+	//TODO: if going to use in future then cache.
+	auto health = m_player.GetComponent<C_Health>();
+	m_healthBarSprite->setTextureRect(sf::IntRect(0, 0, (int)(213.f / health->GetMax()) * health->GetCurrent(), 8));
+	m_window.draw(*m_healthBarSprite);
+
+	//TODO: cache getcomponent.
+	auto mana = m_player.GetComponent<C_Mana>();
+	m_manaBarSprite->setTextureRect(sf::IntRect(0, 0, (int)(213.f / mana->GetMax()) * mana->GetCurrent(), 8));
+	m_window.draw(*m_manaBarSprite);
+
+
+	// Present the back-buffer to the screen.
+	m_window.display();
+}
+
+void Game::LateUpdate()
+{
+	m_aim.LateUpdate(m_elapsed);
+	m_player.LateUpdate(m_elapsed);
+
+	for (const auto& obj : m_objects)
+	{
+		obj->LateUpdate(m_elapsed);
+	}
+
+	auto objIterator = m_objects.begin();
+	while (objIterator != m_objects.end())
+	{
+		auto obj = **objIterator;
+
+		bool remove = obj.IsQueuedForRemoval();
+
+		if (remove)
 		{
-			// Clear all current items.
-			m_items.clear();
-
-			// Clear all current enemies.
-			m_enemies.clear();
-
-			// Generate a new room.
-			GenerateLevel();
-
-			// Set the key as not collected.
-			m_keyUiSprite->setColor(sf::Color(255, 255, 255, 60));
+			objIterator = m_objects.erase(objIterator);
 		}
 		else
 		{
-			// Update the player.
-			m_player.Update(timeDelta, m_level);
-			m_aim.Update(timeDelta);
-
-			// Store the player position as it's used many times.
-			sf::Vector2f playerPosition = m_player.m_transform->GetPosition();
-
-
-
-			// Update all items.
-			UpdateItems(playerPosition, timeDelta);
-
-			// Update level light.
-			UpdateLight(playerPosition, timeDelta);
-
-			// Update all enemies.
-			UpdateEnemies(playerPosition, timeDelta);
-
-			// Find which torch is nearest the player.
-			auto torches = m_level.GetTorches();
-
-			// If there are torches.
-			if (!torches->empty())
-			{
-				// Store the first torch as the current closest.
-				std::shared_ptr<Object> nearestTorch = torches->front();
-				float lowestDistanceToPlayer = DistanceBetweenPoints(playerPosition, nearestTorch->m_transform->GetPosition());
-
-				for (std::shared_ptr<Object> torch : *torches)
-				{
-					// Get the distance to the player.
-					float distanceToPlayer = DistanceBetweenPoints(playerPosition, torch->m_transform->GetPosition());
-					if (distanceToPlayer < lowestDistanceToPlayer)
-					{
-						lowestDistanceToPlayer = distanceToPlayer;
-						nearestTorch = torch;
-					}
-				}
-
-				m_fireSound.setPosition(nearestTorch->m_transform->GetPosition().x, nearestTorch->m_transform->GetPosition().y, 0.0f);
-			}
-
-			// Check if the player has moved grid square.
-			Tile* playerCurrentTile = m_level.GetTile(playerPosition);
-
-			if (m_playerPreviousTile != playerCurrentTile)
-			{
-				// Store the new tile.
-				m_playerPreviousTile = playerCurrentTile;
-
-				// Update path finding for all enemies if within range of the player.
-				for (const auto& enemy : m_enemies)
-				{
-					if (DistanceBetweenPoints(enemy->m_transform->GetPosition(), playerPosition) < 300.f)
-					{
-						enemy->GetComponent<C_Pathfinding>()->Calculate(m_level, playerPosition);
-					}
-				}
-			}
-
-
-			// Venter the view.
-			m_views[static_cast<int>(VIEW::MAIN)].setCenter(playerPosition);
+			++objIterator;
 		}
 	}
-	break;
 
-	case GAME_STATE::GAME_OVER:
-		// Game over code
-		break;
+
+	// Move newly created objects to global list.
+	for (auto& obj : m_newObjects)
+	{
+		m_objects.push_back(std::move(obj));
 	}
+	m_newObjects.clear();
+
+
+	if (m_newLevelRequested)
+	{
+		m_newLevelRequested = false;
+		GenerateLevel();
+	}
+
+	m_elapsed = m_clock.restart().asSeconds();
 }
 
-//TODO: fix fixed player light outline.
-void Game::UpdateLight(sf::Vector2f playerPosition, float timeDelta)
+
+// Draw the given string at the given position.
+void Game::DrawString(std::string text, sf::Vector2f position, unsigned int size)
 {
-	m_level.Update(timeDelta);
+	// Clear the old data.
+	m_stringStream.str(std::string());
+	m_string.clear();
 
-	for (sf::Sprite& sprite : m_lightGrid)
-	{
-		float tileAlpha = 255.f;
-		float distance = 0.f;				// The distance between player and tile.
+	m_stringStream << text;
+	m_string = m_stringStream.str();
 
-											// Calculate distance between tile and player.
-		distance = DistanceBetweenPoints(sprite.getPosition(), playerPosition);
+	m_text.setString(m_string);
+	m_text.setFont(m_font);
+	m_text.setCharacterSize(size);
+	m_text.setPosition(position.x - (m_text.getLocalBounds().width / 2.f), position.y - (m_text.getLocalBounds().height / 2.f));
 
-		// Calculate tile transparency.
-		if (distance < 200.f)
-		{
-			tileAlpha = 0.f;
-		}
-		else if (distance < 250.f)
-		{
-			tileAlpha = (51.f * (distance - 200.f)) / 10.f;
-		}
-
-		if (tileAlpha != 255.f)
-		{
-			sprite.setColor(sf::Color(255, 255, 255, static_cast<sf::Uint8>(tileAlpha)));
-		}
-	}
-
-
+	m_window.draw(m_text);
 }
 
 // Spawns a given object type at a random location within the map. Has the option to explicitly set a spawn location.
@@ -536,392 +663,23 @@ void Game::SpawnItem(ITEM itemType, sf::Vector2f position)
 
 	std::unique_ptr<Object> item = ItemFactory::CreateInstance(itemType);
 	item->SetContext(&m_context);
-
-	// Set the item position.
 	item->m_transform->SetPosition(spawnLocation);
 
-	//TODO: shared context should have reference to list of all items, this should be added to it.
-	m_items.push_back(std::move(item));
-}
-
-//TODO: add to global object list
-void Game::UpdateItems(sf::Vector2f playerPosition, float timeDelta)
-{
-	// Update all items.
-	auto itemIterator = m_items.begin();
-	while (itemIterator != m_items.end())
+	//TODO: shouldn't need to do anything extra to object retrieved from factory?
+	if (itemType == ITEM::KEY)
 	{
-		// Get the item from the iterator.
-		Object& item = **itemIterator;
+		Object keyTitle;
+		keyTitle.SetContext(&m_context);
+		auto title = keyTitle.AddComponent<C_Title>();
+		title->Set("Key");
+		keyTitle.m_transform->SetParent(item->m_transform);
+		keyTitle.m_transform->SetPosition(sf::Vector2f(0.f, 0.f));
 
-		item.Update(timeDelta);
+		auto newObj = std::make_unique<Object>(keyTitle);
+		m_objects.push_back(std::move(newObj));
 
-		if (DistanceBetweenPoints(item.m_transform->GetPosition(), playerPosition) < 40.f)
-		{
-			//TODO: convert to ActionOnPickUp Components
-			switch (item.GetComponent<C_ItemType>()->Get())
-			{
-			case ITEM::GOLD:
-			{
-				auto points = item.GetComponent<C_PointsOnPickup>();
-
-				if (points)
-				{
-					int goldValue = points->GetValue();
-
-					// Add to the gold total.
-					m_goldTotal += goldValue;
-
-				}
-
-
-				// Play gold collect sound effect.
-				PlaySound(m_coinPickupSound);
-				break;
-			}
-			case ITEM::GEM:
-			{
-				auto points = item.GetComponent<C_PointsOnPickup>();
-
-				if (points)
-				{
-					m_scoreTotal += points->GetValue();
-				}
-
-				// Play the gem pickup sound
-				PlaySound(m_gemPickupSound);
-
-				break;
-			}
-			case ITEM::KEY:
-			{
-				// Unlock the door.
-				m_level.UnlockDoor();
-
-				// Play key collect sound.
-				PlaySound(m_keyPickupSound);
-
-				// Set the key as collected.
-				m_keyUiSprite->setColor(sf::Color::White);
-
-				break;
-			}
-			case ITEM::POTION:
-			{
-				switch (item.GetComponent<C_PotionType>()->Get())
-				{
-				case POTION::ATTACK:
-				{
-					auto attack = m_player.GetComponent<C_Attack>();
-					attack->SetValue(attack->GetValue() + item.GetComponent<C_PointsOnPickup>()->GetValue());
-					break;
-				}
-				case POTION::DEFENSE:
-				{
-					auto defense = m_player.GetComponent<C_Defense>();
-					defense->SetValue(defense->GetValue() + item.GetComponent<C_PointsOnPickup>()->GetValue());
-					break;
-				}
-				case POTION::STRENGTH:
-				{
-					auto strength = m_player.GetComponent<C_Strength>();
-					strength->SetValue(strength->GetValue() + item.GetComponent<C_PointsOnPickup>()->GetValue());
-					break;
-				}
-				case POTION::DEXTERITY:
-				{
-					auto dexterity = m_player.GetComponent<C_Dexterity>();
-					dexterity->SetValue(dexterity->GetValue() + item.GetComponent<C_PointsOnPickup>()->GetValue());
-					break;
-				}
-				case POTION::STAMINA:
-				{
-					auto stamina = m_player.GetComponent<C_Stamina>();
-					stamina->SetValue(stamina->GetValue() + item.GetComponent<C_PointsOnPickup>()->GetValue());
-					break;
-				}
-				}
-
-				break;
-			}
-			case ITEM::HEART:
-			{
-				auto heart = item.GetComponent<C_PointsOnPickup>();
-
-				auto health = m_player.GetComponent<C_Health>();
-				health->SetCurrent(health->GetCurrent() + heart->GetValue());
-				break;
-			}
-			}
-
-			// Finally, delete the object.
-			itemIterator = m_items.erase(itemIterator);
-		}
-		else
-		{
-			// Increment iterator.
-			++itemIterator;
-		}
-	}
-}
-
-// Updates all enemies in the level.
-void Game::UpdateEnemies(sf::Vector2f playerPosition, float timeDelta)
-{
-	// Store player tile.
-	Tile* playerTile = m_level.GetTile(m_player.m_transform->GetPosition());
-
-	//TODO: change to for each loop? this may crash as enemies are removed from list during iteration
-	auto enemyIterator = m_enemies.begin();
-	while (enemyIterator != m_enemies.end())
-	{
-		Entity& enemy = **enemyIterator;
-
-		enemy.Update(timeDelta);
-		++enemyIterator;
-	}
-}
-
-
-// Calculates the distance between two given points.
-float Game::DistanceBetweenPoints(sf::Vector2f position1, sf::Vector2f position2)
-{
-	return (abs(sqrt(((position1.x - position2.x) * (position1.x - position2.x)) + ((position1.y - position2.y) * (position1.y - position2.y)))));
-}
-
-// Draw the given string at the given position.
-void Game::DrawString(std::string text, sf::Vector2f position, unsigned int size)
-{
-	// Clear the old data.
-	m_stringStream.str(std::string());
-	m_string.clear();
-
-	m_stringStream << text;
-	m_string = m_stringStream.str();
-
-	m_text.setString(m_string);
-	m_text.setFont(m_font);
-	m_text.setCharacterSize(size);
-	m_text.setPosition(position.x - (m_text.getLocalBounds().width / 2.f), position.y - (m_text.getLocalBounds().height / 2.f));
-
-	m_window.draw(m_text);
-}
-
-
-
-// Spawns a given number of enemies in the level.
-void Game::SpawnEnemy(ENEMY enemyType, sf::Vector2f position)
-{
-	// Spawn location of enemy(s).
-	sf::Vector2f spawnLocation;
-
-	// Choose a random, unused spawn location.
-	if ((position.x >= 0.f) || (position.y >= 0.f))
-		spawnLocation = position;
-	else
-		spawnLocation = m_level.GetRandomSpawnLocation();
-
-	// Create the enemy.
-	std::unique_ptr<Entity> enemy = EntityFactory::GetInstance()->Create(enemyType, &m_context);
-
-	//TODO: do we need this check? should't it always return an enemy?
-	if (enemy)
-	{
-		enemy->SetContext(&m_context);
-
-		// Set spawn location.
-		enemy->m_transform->SetPosition(spawnLocation);
-
-		// Add to list of all enemies.
-		m_enemies.push_back(std::move(enemy));
-	}
-}
-
-// Spawns a given number of a given tile randomly in the level.
-void Game::SpawnRandomTiles(TILE tileType, int count)
-{
-	// Declare the variables we need.
-	int rowIndex(0), columnIndex(0), tileIndex(0);
-
-	// Loop the number of tiles we need.
-	for (int i = 0; i < count; i++)
-	{
-		// Declare the variables we need.
-		int columnIndex(0), rowIndex(0);
-
-		// Loop until we select a floor tile.
-		while (!m_level.IsFloor(columnIndex, rowIndex))
-		{
-			// Generate a random index for the row and column
-			columnIndex = std::rand() % GRID_WIDTH;
-			rowIndex = std::rand() % GRID_HEIGHT;
-		}
-
-		// Now we change the selected tile.
-		m_level.SetTile(columnIndex, rowIndex, tileType);
-	}
-}
-
-//TODO: this should not be in game class: move to components.
-void Game::PlaySound(sf::Sound& sound, sf::Vector2f position)
-{
-	// Generate and set a random pitch.
-	float pitch = (std::rand() % 11 + 95) / 100.f;
-	sound.setPitch(pitch);
-
-	// Set the position of the sound.
-	sound.setPosition(position.x, position.y, 0.f);
-
-	// Play the sound.
-	sound.play();
-}
-
-//TODO: implement off-screen culling
-void Game::Draw(float timeDelta)
-{
-	// Clear the screen.
-	m_window.clear(sf::Color(3, 3, 3, 225));		// Grey
-
-	// Check what state the game is in.
-	switch (m_gameState)
-	{
-	case GAME_STATE::MAIN_MENU:
-		// Draw main menu ...
-		break;
-
-	case GAME_STATE::PLAYING:
-	{
-		// Set the main game view.
-		m_window.setView(m_views[static_cast<int>(VIEW::MAIN)]);
-
-		// Draw the level.
-		m_level.Draw(m_window, timeDelta);
-
-		//TODO: create drawable component. 
-		//TODO: create getcomponents that returns list of all components that match type. Use this to return all drawable.
-		for (const auto& item : m_items)
-		{
-			item->Draw(m_window, timeDelta);
-		}
-
-		//TODO: Make this unneseccary by having components have a virtual draw method and sprite inherit it.
-		// then have one loop through all game objects and call draw on the object::draw.
-		for (const auto& enemy : m_enemies)
-		{
-			enemy->Draw(m_window, timeDelta);
-		}
-
-		m_player.Draw(m_window, timeDelta);
-
-		// Draw level light.
-		for (const sf::Sprite& sprite : m_lightGrid)
-		{
-			m_window.draw(sprite);
-		}
-
-		// Switch to UI view.
-		m_window.setView(m_views[static_cast<int>(VIEW::UI)]);
-
-		// TODO: cache getcomponent.
-		m_aim.GetComponent<C_StaticSprite>()->Draw(m_window, timeDelta);
-
-		// Draw player stats.
-		//TODO: cache components.
-		DrawString(std::to_string(m_player.GetComponent<C_Attack>()->GetValue()), sf::Vector2f(m_screenCenter.x - 210.f, m_screenSize.y - 30.f), 25);
-		DrawString(std::to_string(m_player.GetComponent<C_Defense>()->GetValue()), sf::Vector2f(m_screenCenter.x - 90.f, m_screenSize.y - 30.f), 25);
-		DrawString(std::to_string(m_player.GetComponent<C_Strength>()->GetValue()), sf::Vector2f(m_screenCenter.x + 30.f, m_screenSize.y - 30.f), 25);
-		DrawString(std::to_string(m_player.GetComponent<C_Dexterity>()->GetValue()), sf::Vector2f(m_screenCenter.x + 150.f, m_screenSize.y - 30.f), 25);
-		DrawString(std::to_string(m_player.GetComponent<C_Dexterity>()->GetValue()), sf::Vector2f(m_screenCenter.x + 270.f, m_screenSize.y - 30.f), 25);
-
-		// Draw player score.
-		std::string scoreString;
-
-		//TODO: convert to string format
-		if (m_scoreTotal > 99999)
-		{
-			scoreString = std::to_string(m_scoreTotal);
-		}
-		else if (m_scoreTotal > 9999)
-		{
-			scoreString = "0" + std::to_string(m_scoreTotal);
-		}
-		else if (m_scoreTotal > 999)
-		{
-			scoreString = "00" + std::to_string(m_scoreTotal);
-		}
-		else if (m_scoreTotal > 99)
-		{
-			scoreString = "000" + std::to_string(m_scoreTotal);
-		}
-		else if (m_scoreTotal > 9)
-		{
-			scoreString = "0000" + std::to_string(m_scoreTotal);
-		}
-		else
-		{
-			scoreString = "00000" + std::to_string(m_scoreTotal);
-		}
-
-		DrawString(scoreString, sf::Vector2f(m_screenCenter.x - 120.f, 40.f), 40);
-
-		// Draw gold total.
-		std::string goldString;
-
-		if (m_goldTotal > 99999)
-		{
-			goldString = std::to_string(m_goldTotal);
-		}
-		else if (m_goldTotal > 9999)
-		{
-			goldString = "0" + std::to_string(m_goldTotal);
-		}
-		else if (m_goldTotal > 999)
-		{
-			goldString = "00" + std::to_string(m_goldTotal);
-		}
-		else if (m_goldTotal > 99)
-		{
-			goldString = "000" + std::to_string(m_goldTotal);
-		}
-		else if (m_goldTotal > 9)
-		{
-			goldString = "0000" + std::to_string(m_goldTotal);
-		}
-		else
-		{
-			goldString = "00000" + std::to_string(m_goldTotal);
-		}
-
-		DrawString(goldString, sf::Vector2f(m_screenCenter.x + 220.f, 40.f), 40);
-
-		// Draw rest of the UI.
-		for (const auto& sprite : m_uiSprites)
-		{
-			m_window.draw(*sprite);
-		}
-
-		// Draw the current room and floor.
-		DrawString("Floor " + std::to_string(m_level.GetFloorNumber()), sf::Vector2f(70.f, m_screenSize.y - 65.f), 25);
-		DrawString("Room " + std::to_string(m_level.GetRoomNumber()), sf::Vector2f(70.f, m_screenSize.y - 30.f), 25);
-
-		// Draw health and mana bars.
-		//TODO: if going to use in future then cache.
-		auto health = m_player.GetComponent<C_Health>();
-		m_healthBarSprite->setTextureRect(sf::IntRect(0, 0, (int)(213.f / health->GetMax()) * health->GetCurrent(), 8));
-		m_window.draw(*m_healthBarSprite);
-
-		//TODO: cache getcomponent.
-		auto mana = m_player.GetComponent<C_Mana>();
-		m_manaBarSprite->setTextureRect(sf::IntRect(0, 0, (int)(213.f / mana->GetMax()) * mana->GetCurrent(), 8));
-		m_window.draw(*m_manaBarSprite);
-	}
-	break;
-
-	case GAME_STATE::GAME_OVER:
-		// Draw game over screen ...
-		break;
+		m_objects.push_back(std::move(item));
 	}
 
-	// Present the back-buffer to the screen.
-	m_window.display();
+
 }

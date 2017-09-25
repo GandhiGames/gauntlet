@@ -1,7 +1,7 @@
 #pragma once
 
 #include<memory>
-#include "Humanoid.h"
+#include "Object.h"
 
 // Enemy types.
 enum class ENEMY {
@@ -15,7 +15,7 @@ class EntityFactory
 public:
 	static EntityFactory* GetInstance();
 
-	std::unique_ptr<Entity> Create(ENEMY type, SharedContext* context);
+	std::unique_ptr<Object> Create(ENEMY type, SharedContext* context);
 
 private:
 	EntityFactory();

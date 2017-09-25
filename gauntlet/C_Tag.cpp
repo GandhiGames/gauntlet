@@ -2,7 +2,7 @@
 #include "C_Tag.h"
 
 
-C_Tag::C_Tag() : Component(true)
+C_Tag::C_Tag(Object* owner) : Component(owner, true)
 {
 }
 

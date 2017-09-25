@@ -7,7 +7,7 @@ class C_ItemType : public Component
 {
 
 public:
-	C_ItemType();
+	C_ItemType(Object* owner);
 	~C_ItemType();
 
 	void Set(ITEM type);

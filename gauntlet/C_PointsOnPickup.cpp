@@ -2,7 +2,7 @@
 #include "C_PointsOnPickup.h"
 
 
-C_PointsOnPickup::C_PointsOnPickup() : Component(true),
+C_PointsOnPickup::C_PointsOnPickup(Object* owner) : Component(owner, true),
 	m_value(0)
 {
 }

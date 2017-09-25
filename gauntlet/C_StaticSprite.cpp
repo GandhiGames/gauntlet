@@ -3,7 +3,7 @@
 #include "Object.h"
 
 //TODO: shouldn't need to set unique on both drawable and updateable
-C_StaticSprite::C_StaticSprite() : Component(true)
+C_StaticSprite::C_StaticSprite(Object* owner) : Component(owner, true)
 {
 	
 }
@@ -14,7 +14,7 @@ C_StaticSprite::~C_StaticSprite()
 
 void C_StaticSprite::LoadDependencies(Object* owner)
 {
-	assert(!owner->GetComponent<C_AnimatedSprite>());
+	assert(owner->GetComponents<C_Drawable>().size() == 0);
 
 	m_transform = owner->m_transform;
 }

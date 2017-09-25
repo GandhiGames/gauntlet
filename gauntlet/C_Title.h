@@ -3,10 +3,11 @@
 #include "C_Drawable.h"
 #include "C_Transform.h"
 
+//TODO: rename to text.
 class C_Title : public Component, public C_Drawable
 {
 public:
-	C_Title();
+	C_Title(Object* owner);
 	~C_Title();
 
 	void LoadDependencies(Object* owner) override;

@@ -4,6 +4,7 @@
 // Entry point of the application.
 int main()
 {
+	
 	// Set a random seed.
 	srand(static_cast<unsigned int>(time(nullptr)));
 
@@ -13,7 +14,15 @@ int main()
 
 	// Initialize and run the game object.
 	game.Initialize();
-	game.Run();
+
+	while (game.IsRunning())
+	{
+		game.Update();
+		game.Draw();
+		game.LateUpdate();
+	}
+
+	//TODO: while(game.running) update, draw, lateupdate
 
 	// Exit the application.
 	return 0;

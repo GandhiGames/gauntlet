@@ -8,7 +8,7 @@
 class C_StaticSprite : public Component, public C_Drawable, public C_Updateable
 {
 public:
-	C_StaticSprite();
+	C_StaticSprite(Object* owner);
 	~C_StaticSprite();
 
 	void LoadDependencies(Object* owner) override;
@@ -39,8 +39,6 @@ public:
 	* @return A reference to the object's sprite.
 	*/
 	sf::Sprite& GetSprite();
-
-	
 
 private:
 	/**

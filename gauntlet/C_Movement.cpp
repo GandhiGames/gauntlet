@@ -2,11 +2,9 @@
 #include "C_Movement.h"
 #include "Object.h"
 
-C_Movement::C_Movement() : Component(true),
-m_speed(0),
+C_Movement::C_Movement(Object* owner) : Component(owner, true),
 m_velocity({ 0.f, 0.f })
 {
-	m_speed = rand() % 51 + 150;
 }
 
 
@@ -21,13 +19,12 @@ void C_Movement::LoadDependencies(Object* owner)
 
 void C_Movement::Update(float timeDelta, Object* owner)
 {
-	float length = sqrt(m_velocity.x * m_velocity.x + m_velocity.y * m_velocity.y);
-	m_velocity.x /= length;
-	m_velocity.y /= length;
-
-	m_transform->SetPosition(
-		m_transform->GetPosition().x + m_velocity.x * (m_speed * timeDelta),
-		m_transform->GetPosition().y + m_velocity.y * (m_speed * timeDelta));
+	if (abs(m_velocity.x) > 0.f || abs(m_velocity.y) > 0.f)
+	{
+		m_transform->SetPosition(
+			m_transform->GetPosition().x + m_velocity.x,
+			m_transform->GetPosition().y + m_velocity.y);
+	}
 }
 
 void C_Movement::SetVelocity(const sf::Vector2f& velocity)

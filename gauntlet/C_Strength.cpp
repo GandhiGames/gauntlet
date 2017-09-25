@@ -2,7 +2,7 @@
 #include "C_Strength.h"
 
 
-C_Strength::C_Strength() : C_BaseStat()
+C_Strength::C_Strength(Object* owner) : C_BaseStat(owner)
 {
 }
 

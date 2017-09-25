@@ -15,7 +15,7 @@ enum class POTION {
 class C_PotionType : public Component
 {
 public:
-	C_PotionType();
+	C_PotionType(Object* owner);
 	~C_PotionType();
 
 	POTION Get() const;

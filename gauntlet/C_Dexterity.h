@@ -5,7 +5,7 @@
 class C_Dexterity : public C_BaseStat
 {
 public:
-	C_Dexterity();
+	C_Dexterity(Object* owner);
 	~C_Dexterity();
 };
 

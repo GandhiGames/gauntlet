@@ -3,7 +3,7 @@
 #include "Object.h"
 #include "SharedContext.h"
 
-C_Torch::C_Torch() : Component(true), m_brightness(1.f)
+C_Torch::C_Torch(Object* owner) : Component(owner, true), m_brightness(1.f)
 {
 }
 
@@ -40,10 +40,4 @@ void C_Torch::Update(float timeDelta, Object* owner)
 
 		}
 	}
-}
-
-//TODO: this also exists in game.cpp, move to utils class.
-float C_Torch::DistanceBetweenPoints(sf::Vector2f position1, sf::Vector2f position2)
-{
-	return (abs(sqrt(((position1.x - position2.x) * (position1.x - position2.x)) + ((position1.y - position2.y) * (position1.y - position2.y)))));
 }

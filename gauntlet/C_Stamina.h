@@ -4,7 +4,7 @@
 class C_Stamina : public C_BaseStat
 {
 public:
-	C_Stamina();
+	C_Stamina(Object* owner);
 	~C_Stamina();
 };
 

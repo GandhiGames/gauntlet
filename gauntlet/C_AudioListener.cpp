@@ -2,7 +2,7 @@
 #include "C_AudioListener.h"
 #include "Object.h"
 
-C_AudioListener::C_AudioListener() : Component(true)
+C_AudioListener::C_AudioListener(Object* owner) : Component(owner, true)
 {
 }
 

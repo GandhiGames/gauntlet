@@ -29,17 +29,32 @@
 #include "C_AudioListener.h"
 #include "C_ProjectileAttack.h"
 #include "C_Tag.h"
-#include "C_Damageable.h"
 #include "C_SpawnItemsOnDeath.h"
 #include "C_PlaySoundOnDeath.h"
 #include "C_InstanceID.h"
-#include "C_CollisionDamage.h"
 #include "C_Drawable.h"
 #include "C_Updateable.h"
 #include "C_ItemType.h"
 #include "C_Projectile.h"
 #include "C_Torch.h"
+#include "C_PlayerTorch.h"
 #include "C_Movement.h"
+#include "C_KeyboardController.h"
+#include "C_DirectionalAnimation.h"
+#include "C_PlayerClass.h"
+#include "C_Inventory.h"
+#include "C_Collidable.h"
+#include "C_Gold.h"
+#include "C_DistanceBasedCollision.h"
+#include "C_Gem.h"
+#include "C_Key.h"
+#include "C_Potion.h"
+#include "C_Heart.h"
+#include "C_Event.h"
+#include "C_OnDeathListener.h"
+#include "C_ClosestTorchSoundPosition.h"
+#include "C_EndLevelTileCollision.h"
+#include "C_CentreOnMousePosition.h"
 
 //TODO: add fixed and late update
 class Object
@@ -58,20 +73,27 @@ public:
 
 	void Draw(sf::RenderWindow &window, float timeDelta);
 
+	void LateUpdate(float timeDelta);
+
+	void OnCollisionEnter(Object* other);
+	void OnCollisionExit(Object* other);
+
 	//TODO: we don't want to have to remember to set context when creating new objects. Have this set somewhere else or through constructor.
 	void SetContext(SharedContext* context);
 	SharedContext* GetContext();
 
 	void Destroy();
 
+	bool IsQueuedForRemoval() const;
+
 	/**
 	* Attaches a component to the object.
 	*/
 	template <typename T> std::shared_ptr<T> AddComponent()
 	{
-		// First we'll create the component.
-		std::shared_ptr<T> newComponent = std::make_shared<T>();
-		newComponent->LoadDependencies(this);
+		//static_assert(std::is_base_of<Component, T>::value, "T must derive from Component");
+		
+		std::shared_ptr<T> newComponent = std::make_shared<T>(this);
 
 		if (newComponent->RequiresUnique())
 		{
@@ -81,17 +103,15 @@ public:
 				if (std::dynamic_pointer_cast<T>(exisitingComponent))
 				{
 					//TODO: create in-game debug/message log.
-					std::cout << "Overwritting component: " << newComponent << std::endl;
-					exisitingComponent = newComponent;
-					return newComponent;
+					std::cout << "Attempting to re-add component: " << newComponent << std::endl;
+					return std::dynamic_pointer_cast<T>(exisitingComponent);
 				}
 			}
 		}
 
-		// The component is the first of its type so add it.
+		newComponent->LoadDependencies(this);
 		m_components.push_back(newComponent);
 
-		// Return the new component.
 		return newComponent;
 	};
 
@@ -100,6 +120,8 @@ public:
 	*/
 	template <typename T> std::shared_ptr<T> GetComponent()
 	{
+		//static_assert(std::is_base_of<Component, T>::value, "T must derive from Component");
+
 		// Check that we don't already have a component of this type.
 		for (auto& exisitingComponent : m_components)
 		{
@@ -114,13 +136,15 @@ public:
 
 	template <typename T> std::vector<std::shared_ptr<T>> GetComponents()
 	{
+		//static_assert(std::is_base_of<Component, T>::value, "T must derive from Component");
+
 		std::vector<std::shared_ptr<T>> components;
 
-		// Check that we don't already have a component of this type.
 		for (auto& exisitingComponent : m_components)
 		{
 			if (std::dynamic_pointer_cast<T>(exisitingComponent))
 			{
+				//TODO: change all to push_back?
 				components.emplace_back(std::dynamic_pointer_cast<T>(exisitingComponent));
 			}
 		}
@@ -136,7 +160,7 @@ public:
 	
 private:
 	std::vector<std::shared_ptr<Component>> m_components;
-
+	bool m_queuedForRemoval;
 	SharedContext* m_context;
 };
 #endif

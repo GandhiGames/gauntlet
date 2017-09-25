@@ -28,12 +28,6 @@
     <Filter Include="Source Files\Characters">
       <UniqueIdentifier>{126e7787-8759-455a-b851-ae31b2ba3924}</UniqueIdentifier>
     </Filter>
-    <Filter Include="Source Files\Characters\Enemies">
-      <UniqueIdentifier>{04b3795c-51fc-45bb-8f43-d384c6a1da89}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Header Files\Characters\Enemies">
-      <UniqueIdentifier>{b885cf11-c405-42c3-8422-a57d57f06fbf}</UniqueIdentifier>
-    </Filter>
     <Filter Include="Header Files\Components">
       <UniqueIdentifier>{b4496043-d099-4fb1-8201-e45fb27c52fc}</UniqueIdentifier>
     </Filter>
@@ -48,41 +42,14 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\Game.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Input.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Level.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Object.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="src\PCH.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\SoundBufferManager.cpp">
       <Filter>Source Files\Manager Classes</Filter>
     </ClCompile>
     <ClCompile Include="src\TextureManager.cpp">
       <Filter>Source Files\Manager Classes</Filter>
     </ClCompile>
-    <ClCompile Include="src\Entity.cpp">
-      <Filter>Source Files\Characters</Filter>
-    </ClCompile>
     <ClCompile Include="src\Player.cpp">
       <Filter>Source Files\Characters</Filter>
-    </ClCompile>
-    <ClCompile Include="src\Humanoid.cpp">
-      <Filter>Source Files\Characters\Enemies</Filter>
-    </ClCompile>
-    <ClCompile Include="TODO.cpp">
-      <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="C_Health.cpp">
       <Filter>Source Files\Components</Filter>
@@ -138,19 +105,10 @@
     <ClCompile Include="C_AudioListener.cpp">
       <Filter>Source Files\Components</Filter>
     </ClCompile>
-    <ClCompile Include="SharedContext.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="C_ProjectileAttack.cpp">
       <Filter>Source Files\Components</Filter>
     </ClCompile>
     <ClCompile Include="C_Tag.cpp">
-      <Filter>Source Files\Components</Filter>
-    </ClCompile>
-    <ClCompile Include="C_CollisionDamage.cpp">
-      <Filter>Source Files\Components</Filter>
-    </ClCompile>
-    <ClCompile Include="C_Damageable.cpp">
       <Filter>Source Files\Components</Filter>
     </ClCompile>
     <ClCompile Include="C_SpawnItemsOnDeath.cpp">
@@ -177,7 +135,79 @@
     <ClCompile Include="C_Projectile.cpp">
       <Filter>Source Files\Components</Filter>
     </ClCompile>
+    <ClCompile Include="C_DirectionalAnimation.cpp">
+      <Filter>Source Files\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="C_KeyboardController.cpp">
+      <Filter>Source Files\Components</Filter>
+    </ClCompile>
     <ClCompile Include="C_Movement.cpp">
+      <Filter>Source Files\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="C_PlayerClass.cpp">
+      <Filter>Source Files\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="C_Collidable.cpp">
+      <Filter>Source Files\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="C_Inventory.cpp">
+      <Filter>Source Files\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="C_PlayerTorch.cpp">
+      <Filter>Source Files\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="C_Gold.cpp">
+      <Filter>Source Files\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="C_DistanceBasedCollision.cpp">
+      <Filter>Source Files\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="C_Gem.cpp">
+      <Filter>Source Files\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="C_Heart.cpp">
+      <Filter>Source Files\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="C_Key.cpp">
+      <Filter>Source Files\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="C_Potion.cpp">
+      <Filter>Source Files\Components</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Game.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Input.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Level.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Object.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\PCH.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="SharedContext.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TODO.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C_ClosestTorchSoundPosition.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C_OnDeathListener.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C_EndLevelTileCollision.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="C_CentreOnMousePosition.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -206,14 +236,8 @@
     <ClInclude Include="include\TextureManager.h">
       <Filter>Header Files\Manager Classes</Filter>
     </ClInclude>
-    <ClInclude Include="include\Entity.h">
-      <Filter>Header Files\Characters</Filter>
-    </ClInclude>
     <ClInclude Include="include\Player.h">
       <Filter>Header Files\Characters</Filter>
-    </ClInclude>
-    <ClInclude Include="include\Humanoid.h">
-      <Filter>Header Files\Characters\Enemies</Filter>
     </ClInclude>
     <ClInclude Include="Component.h">
       <Filter>Header Files\Components</Filter>
@@ -281,12 +305,6 @@
     <ClInclude Include="C_ProjectileAttack.h">
       <Filter>Header Files\Components</Filter>
     </ClInclude>
-    <ClInclude Include="C_CollisionDamage.h">
-      <Filter>Header Files\Components</Filter>
-    </ClInclude>
-    <ClInclude Include="C_Damageable.h">
-      <Filter>Header Files\Components</Filter>
-    </ClInclude>
     <ClInclude Include="C_SpawnItemsOnDeath.h">
       <Filter>Header Files\Components</Filter>
     </ClInclude>
@@ -311,7 +329,61 @@
     <ClInclude Include="C_Projectile.h">
       <Filter>Header Files\Components</Filter>
     </ClInclude>
+    <ClInclude Include="C_DirectionalAnimation.h">
+      <Filter>Header Files\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="C_KeyboardController.h">
+      <Filter>Header Files\Components</Filter>
+    </ClInclude>
     <ClInclude Include="C_Movement.h">
+      <Filter>Header Files\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="C_PlayerClass.h">
+      <Filter>Header Files\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="C_Collidable.h">
+      <Filter>Header Files\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="C_Inventory.h">
+      <Filter>Header Files\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="C_PlayerTorch.h">
+      <Filter>Header Files\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="C_Gold.h">
+      <Filter>Header Files\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="C_DistanceBasedCollision.h">
+      <Filter>Header Files\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="C_Gem.h">
+      <Filter>Header Files\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="C_Heart.h">
+      <Filter>Header Files\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="C_Key.h">
+      <Filter>Header Files\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="C_Potion.h">
+      <Filter>Header Files\Components</Filter>
+    </ClInclude>
+    <ClInclude Include="C_Event.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="EventHandler.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C_OnDeathListener.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C_ClosestTorchSoundPosition.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C_EndLevelTileCollision.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="C_CentreOnMousePosition.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

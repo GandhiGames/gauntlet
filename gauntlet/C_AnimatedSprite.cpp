@@ -2,7 +2,7 @@
 #include "C_AnimatedSprite.h"
 #include "Object.h"
 
-C_AnimatedSprite::C_AnimatedSprite() : Component(true),
+C_AnimatedSprite::C_AnimatedSprite(Object* owner) : Component(owner, true),
 m_animationSpeed(0),
 m_frameCount(0),
 m_currentFrame(0),
@@ -19,7 +19,8 @@ C_AnimatedSprite::~C_AnimatedSprite()
 
 void C_AnimatedSprite::LoadDependencies(Object* owner)
 {
-	assert(!owner->GetComponent<C_StaticSprite>());
+	//TODO: test this works, implement more error checking.
+	assert(owner->GetComponents<C_Drawable>().size() == 0);
 
 	m_transform = owner->m_transform;
 }

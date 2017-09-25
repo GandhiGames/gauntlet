@@ -3,7 +3,7 @@
 
 int C_InstanceID::count = 0;
 
-C_InstanceID::C_InstanceID() : Component(true)
+C_InstanceID::C_InstanceID(Object* owner) : Component(owner, true)
 {
 	//TODO: check working as intended.
 	m_id = count++;

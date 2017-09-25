@@ -47,6 +47,7 @@ std::unique_ptr<Object> ItemFactory::CreateInstance(ITEM type)
 		//TODO: move to component?
 		item.GetComponent<C_ItemType>()->Set(ITEM::POTION);
 
+		item.AddComponent<C_Potion>();
 		break;
 	}
 	case ITEM::GEM:
@@ -54,6 +55,7 @@ std::unique_ptr<Object> ItemFactory::CreateInstance(ITEM type)
 		item.GetComponent<C_AnimatedSprite>()->SetSprite(TextureManager::GetTexture(TextureManager::AddTexture("../resources/loot/gem/spr_pickup_gem.png")), false, 8, 12);
 		item.AddComponent<C_PointsOnPickup>()->SetValue(std::rand() % 100);
 		item.GetComponent<C_ItemType>()->Set(ITEM::GEM);
+		item.AddComponent<C_Gem>();
 
 		break;
 	}
@@ -62,6 +64,8 @@ std::unique_ptr<Object> ItemFactory::CreateInstance(ITEM type)
 		int goldValue = std::rand() % 21 + 5;
 
 		item.AddComponent<C_PointsOnPickup>()->SetValue(goldValue);
+
+		item.AddComponent<C_Gold>();
 
 		// Choose a sprite based on the gold value.
 		int textureID;
@@ -91,11 +95,9 @@ std::unique_ptr<Object> ItemFactory::CreateInstance(ITEM type)
 	{
 		int textureID = TextureManager::AddTexture("../resources/loot/key/spr_pickup_key.png");
 		item.GetComponent<C_AnimatedSprite>()->SetSprite(TextureManager::GetTexture(textureID), false, 8, 12);
-
-		auto title = item.AddComponent<C_Title>();
-		title->Set("Key");
-
 		item.GetComponent<C_ItemType>()->Set(ITEM::KEY);
+		item.AddComponent<C_Key>();
+	
 		break;
 	}
 	case ITEM::HEART:
@@ -105,6 +107,8 @@ std::unique_ptr<Object> ItemFactory::CreateInstance(ITEM type)
 		item.AddComponent<C_PointsOnPickup>()->SetValue(std::rand() % 11 + 10);
 
 		item.GetComponent<C_ItemType>()->Set(ITEM::HEART);
+
+		item.AddComponent<C_Heart>();
 
 		break;
 	}

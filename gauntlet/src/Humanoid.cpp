@@ -10,8 +10,9 @@ Humanoid::Humanoid()
 void Humanoid::Update(float timeDelta)
 {
 	// Call parent functionality.
-	Entity::Update(timeDelta);
-
+	Object::Update(timeDelta);
+	//int m_textureIDs[static_cast<int>(ANIMATION_STATE::COUNT)];
 	// Update the texture with our custom textures.
-	GetComponent<C_AnimatedSprite>()->GetSprite().setTexture(m_textures[m_currentTextureIndex]);
+	//auto textureId = GetComponent<C_DirectionalAnimation>()->GetTextureID();
+	//GetComponent<C_AnimatedSprite>()->GetSprite().setTexture(m_textures[textureId]);
 }

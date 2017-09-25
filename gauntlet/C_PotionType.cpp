@@ -1,7 +1,7 @@
 #include "PCH.h"
 #include "C_PotionType.h"
 
-C_PotionType::C_PotionType() : Component(true)
+C_PotionType::C_PotionType(Object* owner) : Component(owner, true)
 {
 }
 

@@ -6,7 +6,7 @@
 class C_AudioListener : public Component, public C_Updateable
 {
 public:
-	C_AudioListener();
+	C_AudioListener(Object* owner);
 	~C_AudioListener();
 
 	void LoadDependencies(Object* owner) override;

@@ -11,11 +11,11 @@
 #ifndef PLAYER_H
 #define PLAYER_H
 
-#include "Entity.h"
+#include "Object.h"
 #include "Input.h"
 #include "Level.h"
 
-class Player : public Entity
+class Player : public Object
 {
 public:
 	/**
@@ -42,30 +42,13 @@ public:
 	 */
 	int GetTraitCount() const;
 
+
+
+private:
 	/**
-	 * Chooses random traits for the character.
-	 */
+	* Chooses random traits for the character.
+	*/
 	void SetRandomTraits();
-
-	/**
-	 * Gets the player's class.
-	 * @return The player's class.
-	 */
-	PLAYER_CLASS GetClass() const;
-
-private:
-
-	/**
-	 * Checks if the given movement will result in a collision.
-	 * @param movement The movement to check.
-	 * @param level A reference to the level object.
-	 * @return True if the given movement will result in a collision.
-	 */
-	bool CausesCollision(sf::Vector2f movement, Level& level);
-
-private:
-
-	int m_speed;
 
 	/**
 	 * The number of traits that the player can have.
@@ -76,23 +59,5 @@ private:
 	 * An array containing the character's traits.
 	 */
 	PLAYER_TRAIT m_traits[PLAYER_TRAIT_COUNT];
-
-	/**
-	 * The player's class.
-	 */
-	PLAYER_CLASS m_class;
-
-	
-
-	/**
-	 * The time since the last mana regeneration.
-	 */
-	float m_manaDelta;
-
-
-	/**
-	* The number of stat points the entities has to distribute.
-	*/
-	int m_statPoints;
 };
 #endif

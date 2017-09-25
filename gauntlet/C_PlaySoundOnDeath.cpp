@@ -3,7 +3,7 @@
 #include "Object.h"
 
 
-C_PlaySoundOnDeath::C_PlaySoundOnDeath() : Component(false)
+C_PlaySoundOnDeath::C_PlaySoundOnDeath(Object* owner) : Component(owner, false)
 {
 	int soundBufferId = SoundBufferManager::AddSoundBuffer("../resources/sounds/snd_enemy_dead.wav");
 	sound.setBuffer(SoundBufferManager::GetSoundBuffer(soundBufferId));
@@ -19,7 +19,6 @@ C_PlaySoundOnDeath::~C_PlaySoundOnDeath()
 
 void C_PlaySoundOnDeath::LoadDependencies(Object* owner)
 {
-	//owner->GetComponent<C_Health>()->PerformActionOnDeath(OnDeath);
 	m_transform = owner->m_transform;
 }
 
@@ -34,6 +33,7 @@ void C_PlaySoundOnDeath::OnDeath()
 	// Set the position of the sound.
 	sound.setPosition(position.x, position.y, 0.f);
 
-	// Play the sound.
+	//TODO: check if this is actually playing? May need to create new object
+	// with lifetime of sound.
 	sound.play();
 }

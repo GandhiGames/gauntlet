@@ -10,7 +10,7 @@ class C_AnimatedSprite : public Component, public C_Drawable, public C_Updateabl
 	friend class Object;
 
 public:
-	C_AnimatedSprite();
+	C_AnimatedSprite(Object* owner);
 	~C_AnimatedSprite();
 
 	void LoadDependencies(Object* owner) override;

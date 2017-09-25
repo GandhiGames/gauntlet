@@ -5,7 +5,7 @@
 class C_InstanceID : public Component
 {
 public:
-	C_InstanceID();
+	C_InstanceID(Object* owner);
 	~C_InstanceID();
 
 	const int& Get();

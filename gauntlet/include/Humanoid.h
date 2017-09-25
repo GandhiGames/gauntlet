@@ -11,9 +11,9 @@
 #ifndef HUMANOID_H
 #define HUMANOID_H
 
-#include "Entity.h"
+#include "Object.h"
 
-class Humanoid : public Entity
+class Humanoid : public Object
 {
 public:
 
@@ -32,7 +32,7 @@ public:
 	/**
 	* An array of modified textures.
 	*/
-	sf::Texture m_textures[static_cast<int>(ANIMATION_STATE::COUNT)];
+	//sf::Texture m_textures[static_cast<int>(ANIMATION_STATE::COUNT)];
 
 
 };

@@ -2,7 +2,7 @@
 #include "C_ItemType.h"
 
 
-C_ItemType::C_ItemType() : Component(true), m_type(ITEM::COUNT)
+C_ItemType::C_ItemType(Object* owner) : Component(owner, true), m_type(ITEM::COUNT)
 {
 }
 

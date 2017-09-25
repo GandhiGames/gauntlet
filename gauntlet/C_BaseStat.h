@@ -5,7 +5,7 @@
 class C_BaseStat : public Component
 {
 public:
-	C_BaseStat();
+	C_BaseStat(Object* owner);
 	virtual ~C_BaseStat() = 0;
 
 	int GetValue() const;

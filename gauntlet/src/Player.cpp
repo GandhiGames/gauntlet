@@ -2,20 +2,33 @@
 #include "Player.h"
 
 // Constructor.
-Player::Player() :
-m_manaDelta(0.f),
-m_statPoints(0)
+Player::Player() 
 {
+	AddComponent<C_Health>();
+	AddComponent<C_Defense>();
+	AddComponent<C_Strength>();
+	AddComponent<C_Dexterity>();
+	AddComponent<C_Stamina>();
+	AddComponent<C_Attack>();
+	AddComponent<C_Mana>();
+
 	AddComponent<C_AudioListener>();
+
+	AddComponent<C_Movement>();
+	AddComponent<C_KeyboardController>();
 
 	auto sprite = AddComponent<C_AnimatedSprite>();
 
+	auto plyrClass = AddComponent<C_PlayerClass>();
 	// Generate a random class.
-	m_class = static_cast<PLAYER_CLASS>(std::rand() % static_cast<int>(PLAYER_CLASS::COUNT));
+	auto setClass = static_cast<PLAYER_CLASS>(std::rand() % static_cast<int>(PLAYER_CLASS::COUNT));
+
+	plyrClass->Set(setClass);
+
 	std::string className;
 
 	// Set class-specific variables.
-	switch (m_class)
+	switch (setClass)
 	{
 	case PLAYER_CLASS::WARRIOR:
 	{
@@ -44,19 +57,22 @@ m_statPoints(0)
 	}
 	}
 
-	// Load textures.
-	m_textureIDs[static_cast<int>(ANIMATION_STATE::WALK_UP)] = TextureManager::AddTexture("../resources/players/" + className + "/spr_" + className + "_walk_up.png");
-	m_textureIDs[static_cast<int>(ANIMATION_STATE::WALK_DOWN)] = TextureManager::AddTexture("../resources/players/" + className + "/spr_" + className + "_walk_down.png");
-	m_textureIDs[static_cast<int>(ANIMATION_STATE::WALK_RIGHT)] = TextureManager::AddTexture("../resources/players/" + className + "/spr_" + className + "_walk_right.png");
-	m_textureIDs[static_cast<int>(ANIMATION_STATE::WALK_LEFT)] = TextureManager::AddTexture("../resources/players/" + className + "/spr_" + className + "_walk_left.png");
-	m_textureIDs[static_cast<int>(ANIMATION_STATE::IDLE_UP)] = TextureManager::AddTexture("../resources/players/" + className + "/spr_" + className + "_idle_up.png");
-	m_textureIDs[static_cast<int>(ANIMATION_STATE::IDLE_DOWN)] = TextureManager::AddTexture("../resources/players/" + className + "/spr_" + className + "_idle_down.png");
-	m_textureIDs[static_cast<int>(ANIMATION_STATE::IDLE_RIGHT)] = TextureManager::AddTexture("../resources/players/" + className + "/spr_" + className + "_idle_right.png");
-	m_textureIDs[static_cast<int>(ANIMATION_STATE::IDLE_LEFT)] = TextureManager::AddTexture("../resources/players/" + className + "/spr_" + className + "_idle_left.png");
+	std::array<int, static_cast<int>(ANIMATION_STATE::COUNT)> textureIDs;
+	textureIDs[static_cast<int>(ANIMATION_STATE::WALK_UP)] = TextureManager::AddTexture("../resources/players/" + className + "/spr_" + className + "_walk_up.png");
+	textureIDs[static_cast<int>(ANIMATION_STATE::WALK_DOWN)] = TextureManager::AddTexture("../resources/players/" + className + "/spr_" + className + "_walk_down.png");
+	textureIDs[static_cast<int>(ANIMATION_STATE::WALK_RIGHT)] = TextureManager::AddTexture("../resources/players/" + className + "/spr_" + className + "_walk_right.png");
+	textureIDs[static_cast<int>(ANIMATION_STATE::WALK_LEFT)] = TextureManager::AddTexture("../resources/players/" + className + "/spr_" + className + "_walk_left.png");
+	textureIDs[static_cast<int>(ANIMATION_STATE::IDLE_UP)] = TextureManager::AddTexture("../resources/players/" + className + "/spr_" + className + "_idle_up.png");
+	textureIDs[static_cast<int>(ANIMATION_STATE::IDLE_DOWN)] = TextureManager::AddTexture("../resources/players/" + className + "/spr_" + className + "_idle_down.png");
+	textureIDs[static_cast<int>(ANIMATION_STATE::IDLE_RIGHT)] = TextureManager::AddTexture("../resources/players/" + className + "/spr_" + className + "_idle_right.png");
+	textureIDs[static_cast<int>(ANIMATION_STATE::IDLE_LEFT)] = TextureManager::AddTexture("../resources/players/" + className + "/spr_" + className + "_idle_left.png");
+
+	auto anim = AddComponent<C_DirectionalAnimation>();
+	anim->SetTextures(textureIDs);
 
 	// Set initial sprite.
-	sprite->SetSprite(TextureManager::GetTexture(m_textureIDs[static_cast<int>(ANIMATION_STATE::WALK_UP)]), false, 8, 12);
-	m_currentTextureIndex = static_cast<int>(ANIMATION_STATE::WALK_UP);
+	sprite->SetSprite(TextureManager::GetTexture(textureIDs[static_cast<int>(ANIMATION_STATE::WALK_UP)]), false, 8, 12);
+	//m_currentTextureIndex = static_cast<int>(ANIMATION_STATE::WALK_UP);
 	sprite->GetSprite().setOrigin(sf::Vector2f(13.f, 18.f));
 
 	// Set random traits.
@@ -65,10 +81,9 @@ m_statPoints(0)
 	// Set fixed stats.
 	GetComponent<C_Health>()->SetCurrent(100);
 	GetComponent<C_Mana>()->SetCurrent(50);
-	m_speed = 200;
 
 	// Randomly distribute other stats.
-	m_statPoints = 50;
+	int statPoints = 50;
 
 	int attackBias = std::rand() % 101;
 	int defenseBias = std::rand() % 101;
@@ -79,147 +94,25 @@ m_statPoints(0)
 	int total = attackBias + defenseBias + strengthBias + dexterityBias + staminaBias;
 
 	auto attack = GetComponent<C_Attack>();
-	attack->SetValue(attack->GetValue() + m_statPoints * (attackBias / total));
+	attack->SetValue(attack->GetValue() + statPoints * (attackBias / total));
 	
 	auto defense = GetComponent<C_Defense>();
-	defense->SetValue(defense->GetValue() + m_statPoints * (defenseBias / total));
+	defense->SetValue(defense->GetValue() + statPoints * (defenseBias / total));
 	
 	auto strength = GetComponent<C_Strength>();
-	strength->SetValue(strength->GetValue() + m_statPoints * (strengthBias / total));
+	strength->SetValue(strength->GetValue() + statPoints * (strengthBias / total));
 
 	auto dexterity = GetComponent<C_Dexterity>();
-	dexterity->SetValue(dexterity->GetValue() + m_statPoints * (dexterityBias / total));
+	dexterity->SetValue(dexterity->GetValue() + statPoints * (dexterityBias / total));
 
 	auto stamina = GetComponent<C_Stamina>();
-	stamina->SetValue(stamina->GetValue() + m_statPoints * (staminaBias / total));
+	stamina->SetValue(stamina->GetValue() + statPoints * (staminaBias / total));
 }
 
 // Updates the player object.
 void Player::Update(float timeDelta, Level& level)
 {
 	Object::Update(timeDelta);
-
-	// Calculate movement speed based on the timeDelta since the last update.
-	sf::Vector2f movementSpeed(0.f, 0.f);
-	sf::Vector2f previousPosition = m_transform->GetPosition();
-
-	// Calculate where the current movement will put us.
-	ANIMATION_STATE animState = static_cast<ANIMATION_STATE>(m_currentTextureIndex);
-
-	if (Input::IsKeyPressed(Input::KEY::KEY_LEFT))
-	{
-		// Set movement speed.
-		movementSpeed.x = -m_speed * timeDelta;
-
-		// Chose animation state.
-		animState = ANIMATION_STATE::WALK_LEFT;
-	}
-	else if (Input::IsKeyPressed(Input::KEY::KEY_RIGHT))
-	{
-		// Set movement speed.
-		movementSpeed.x = m_speed * timeDelta;
-
-		// Chose animation state.
-		animState = ANIMATION_STATE::WALK_RIGHT;
-	}
-
-	if (Input::IsKeyPressed(Input::KEY::KEY_UP))
-	{
-		// Set movement speed.
-		movementSpeed.y = -m_speed * timeDelta;
-
-		// Chose animation state.
-		animState = ANIMATION_STATE::WALK_UP;
-	}
-	else if (Input::IsKeyPressed(Input::KEY::KEY_DOWN))
-	{
-		// Set movement speed.
-		movementSpeed.y = m_speed * timeDelta;
-
-		// Chose animation state.
-		animState = ANIMATION_STATE::WALK_DOWN;
-	}
-
-	// Calculate horizontal movement.
-	if (CausesCollision(sf::Vector2f(movementSpeed.x, 0.0f), level))
-	{
-		m_transform->SetX(previousPosition.x);
-	}
-	else
-	{
-		m_transform->SetX(m_transform->GetPosition().x + movementSpeed.x);
-	}
-
-	// Calculate horizontal movement.
-	if (CausesCollision(sf::Vector2f(0.0f, movementSpeed.y), level))
-	{
-		m_transform->SetY(previousPosition.y);
-	}
-	else
-	{
-		m_transform->SetY(m_transform->GetPosition().y + movementSpeed.y);
-	}
-
-
-	//TODO: cache call to getcomponent.
-	auto sprite = GetComponent<C_AnimatedSprite>();
-
-	// Set the sprite.
-	if (m_currentTextureIndex != static_cast<int>(animState))
-	{
-		m_currentTextureIndex = static_cast<int>(animState);
-		sprite->GetSprite().setTexture(TextureManager::GetTexture(m_textureIDs[m_currentTextureIndex]));
-	}
-
-	// set animation speed
-	if ((movementSpeed.x == 0) && (movementSpeed.y == 0))
-	{
-		// the character is still
-		if (sprite->IsAnimated())
-		{
-			// Update sprite to idle version.
-			// In our enum we have 4 walking sprites followed by 4 idle sprites.
-			// Given this, we can simply add 4 to a walking sprite to get its idle counterpart.
-			m_currentTextureIndex += 4;
-			sprite->GetSprite().setTexture(TextureManager::GetTexture(m_textureIDs[m_currentTextureIndex]));
-
-			// Stop movement animations.
-			sprite->SetAnimated(false);
-		}
-	}
-	else
-	{
-		// the character is moving
-		if (!sprite->IsAnimated())
-		{
-			// Update sprite to walking version.
-			m_currentTextureIndex -= 4;
-			sprite->GetSprite().setTexture(TextureManager::GetTexture(m_textureIDs[m_currentTextureIndex]));
-
-			// Start movement animations.
-			sprite->SetAnimated(true);
-		}
-	}
-
-	if ((m_manaDelta += timeDelta) > 0.20)
-	{
-		//TODO: cache call to getcomponent.
-		auto mana = GetComponent<C_Mana>();
-
-		int curMana = mana->GetCurrent();
-		if (curMana < mana->GetMax())
-		{
-			mana->SetCurrent(curMana + 1);
-		}
-
-		m_manaDelta = 0.f;
-	}
-}
-
-// Returns the player's class.
-PLAYER_CLASS Player::GetClass() const
-{
-	return m_class;
 }
 
 // Chooses random traits for the character.
@@ -278,34 +171,4 @@ PLAYER_TRAIT* Player::GetTraits()
 int Player::GetTraitCount() const
 {
 	return PLAYER_TRAIT_COUNT;
-}
-
-// Checks is the given movement will result in a collision.
-bool Player::CausesCollision(sf::Vector2f movement, Level& level)
-{
-	// Get the tiles that the four corners other player are overlapping with.
-	Tile* overlappingTiles[4];
-	sf::Vector2f newPosition = m_transform->GetPosition() + movement;
-
-	// Top left.
-	overlappingTiles[0] = level.GetTile(sf::Vector2f(newPosition.x - 14.f, newPosition.y - 14.f));
-
-	// Top right.
-	overlappingTiles[1] = level.GetTile(sf::Vector2f(newPosition.x + 14.f, newPosition.y - 14.f));
-
-	// Bottom left.
-	overlappingTiles[2] = level.GetTile(sf::Vector2f(newPosition.x - 14.f, newPosition.y + 14.f));
-
-	// Bottom right.
-	overlappingTiles[3] = level.GetTile(sf::Vector2f(newPosition.x + 14.f, newPosition.y + 14.f));
-
-	// If any of the overlapping tiles are solid there was a collision.
-	for (int i = 0; i < 4; i++)
-	{
-		if (level.IsSolid(overlappingTiles[i]->columnIndex, overlappingTiles[i]->rowIndex))
-			return true;
-	}
-
-	// If we've not returned yet no collisions were found.
-	return false;
 }

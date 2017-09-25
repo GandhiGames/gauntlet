@@ -8,7 +8,7 @@ class C_Movement : public Component, public C_Updateable
 	friend class Object;
 
 public:
-	C_Movement();
+	C_Movement(Object* owner);
 	~C_Movement();
 
 	void LoadDependencies(Object* owner) override;
@@ -22,7 +22,5 @@ private:
 	std::shared_ptr<C_Transform> m_transform;
 
 	sf::Vector2f m_velocity;
-
-	int m_speed;
 };
 

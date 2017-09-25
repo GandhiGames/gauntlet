@@ -22,47 +22,51 @@ EntityFactory::EntityFactory()
 	m_playerHitSound.setRelativeToListener(true);
 }
 
-std::unique_ptr<Entity> EntityFactory::Create(ENEMY type, SharedContext* context)
+std::unique_ptr<Object> EntityFactory::Create(ENEMY type, SharedContext* context)
 {
 	switch (type)
 	{
 	case ENEMY::SLIME:
 	{
-		return nullptr;
+		Object instance;
 
-		Entity instance;
+		instance.AddComponent<C_Health>()->SetCurrent(std::rand() % 41 + 80);
+		instance.AddComponent<C_Attack>()->SetValue(std::rand() % 5 + 6);
+		instance.AddComponent<C_Defense>()->SetValue(std::rand() % 5 + 6);
+		instance.AddComponent<C_Strength>()->SetValue(std::rand() % 5 + 6);
+		instance.AddComponent<C_Dexterity>()->SetValue(std::rand() % 5 + 6);
+		instance.AddComponent<C_Stamina>()->SetValue(std::rand() % 5 + 6);
+		instance.AddComponent<C_Mana>();
+		instance.AddComponent<C_Movement>();
+		auto sprite = instance.AddComponent<C_AnimatedSprite>();
+		auto animation = instance.AddComponent<C_DirectionalAnimation>();
 
 		instance.GetComponent<C_Tag>()->Set(ENEMY_TAG);
-		instance.AddComponent<C_Movement>();
-		instance.AddComponent<C_AnimatedSprite>();
 		instance.AddComponent<C_SpawnItemsOnDeath>();
 		instance.AddComponent<C_PlaySoundOnDeath>();
 		instance.AddComponent<C_Pathfinding>();
-		instance.GetComponent<C_Health>()->SetCurrent(std::rand() % 41 + 80);
-		instance.GetComponent<C_Attack>()->SetValue(std::rand() % 5 + 6);
-		instance.GetComponent<C_Defense>()->SetValue(std::rand() % 5 + 6);
-		instance.GetComponent<C_Strength>()->SetValue(std::rand() % 5 + 6);
-		instance.GetComponent<C_Dexterity>()->SetValue(std::rand() % 5 + 6);
-		instance.GetComponent<C_Stamina>()->SetValue(std::rand() % 5 + 6);
+		instance.AddComponent<C_DistanceBasedCollision>();
+		
 
-		auto dmg = instance.AddComponent<C_CollisionDamage>();
-		dmg->SetDamageAmount(10);
-		dmg->SetTargetTag(PLAYER_TAG);
-		dmg->SetSoundOnHit(&m_playerHitSound);
+		//auto dmg = instance.AddComponent<C_CollisionDamage>();
+		//dmg->SetDamageAmount(10);
+		//dmg->SetTargetTag(PLAYER_TAG);
+		//dmg->SetSoundOnHit(&m_playerHitSound);
 
 		// Load textures.
-		instance.m_textureIDs[static_cast<int>(ANIMATION_STATE::WALK_UP)] = TextureManager::AddTexture("../resources/enemies/slime/spr_slime_walk_up.png");
-		instance.m_textureIDs[static_cast<int>(ANIMATION_STATE::WALK_DOWN)] = TextureManager::AddTexture("../resources/enemies/slime/spr_slime_walk_down.png");
-		instance.m_textureIDs[static_cast<int>(ANIMATION_STATE::WALK_RIGHT)] = TextureManager::AddTexture("../resources/enemies/slime/spr_slime_walk_right.png");
-		instance.m_textureIDs[static_cast<int>(ANIMATION_STATE::WALK_LEFT)] = TextureManager::AddTexture("../resources/enemies/slime/spr_slime_walk_left.png");
-		instance.m_textureIDs[static_cast<int>(ANIMATION_STATE::IDLE_UP)] = TextureManager::AddTexture("../resources/enemies/slime/spr_slime_idle_up.png");
-		instance.m_textureIDs[static_cast<int>(ANIMATION_STATE::IDLE_DOWN)] = TextureManager::AddTexture("../resources/enemies/slime/spr_slime_idle_down.png");
-		instance.m_textureIDs[static_cast<int>(ANIMATION_STATE::IDLE_RIGHT)] = TextureManager::AddTexture("../resources/enemies/slime/spr_slime_idle_right.png");
-		instance.m_textureIDs[static_cast<int>(ANIMATION_STATE::IDLE_LEFT)] = TextureManager::AddTexture("../resources/enemies/slime/spr_slime_idle_left.png");
+		std::array<int, static_cast<int>(ANIMATION_STATE::COUNT)> textureIDs;
+		textureIDs[static_cast<int>(ANIMATION_STATE::WALK_UP)] = TextureManager::AddTexture("../resources/enemies/slime/spr_slime_walk_up.png");
+		textureIDs[static_cast<int>(ANIMATION_STATE::WALK_DOWN)] = TextureManager::AddTexture("../resources/enemies/slime/spr_slime_walk_down.png");
+		textureIDs[static_cast<int>(ANIMATION_STATE::WALK_RIGHT)] = TextureManager::AddTexture("../resources/enemies/slime/spr_slime_walk_right.png");
+		textureIDs[static_cast<int>(ANIMATION_STATE::WALK_LEFT)] = TextureManager::AddTexture("../resources/enemies/slime/spr_slime_walk_left.png");
+		textureIDs[static_cast<int>(ANIMATION_STATE::IDLE_UP)] = TextureManager::AddTexture("../resources/enemies/slime/spr_slime_idle_up.png");
+		textureIDs[static_cast<int>(ANIMATION_STATE::IDLE_DOWN)] = TextureManager::AddTexture("../resources/enemies/slime/spr_slime_idle_down.png");
+		textureIDs[static_cast<int>(ANIMATION_STATE::IDLE_RIGHT)] = TextureManager::AddTexture("../resources/enemies/slime/spr_slime_idle_right.png");
+		textureIDs[static_cast<int>(ANIMATION_STATE::IDLE_LEFT)] = TextureManager::AddTexture("../resources/enemies/slime/spr_slime_idle_left.png");
+		animation->SetTextures(textureIDs);
 
-		auto sprite = instance.GetComponent<C_AnimatedSprite>();
 		// Set initial sprite.
-		sprite->SetSprite(TextureManager::GetTexture(instance.m_textureIDs[static_cast<int>(ANIMATION_STATE::WALK_DOWN)]), false, 8, 12);
+		sprite->SetSprite(TextureManager::GetTexture(textureIDs[static_cast<int>(ANIMATION_STATE::IDLE_DOWN)]), false, 8, 12);
 
 		// Choose the random sprite color and set it.
 		int r, g, b, a;
@@ -81,29 +85,37 @@ std::unique_ptr<Entity> EntityFactory::Create(ENEMY type, SharedContext* context
 
 		sprite->GetSprite().setScale(sf::Vector2f(scale, scale));
 		
-		return std::make_unique<Entity>(instance);
+		return std::make_unique<Object>(instance);
 	}
 	case ENEMY::HUMANOID:
 	{
-		Humanoid instance;
+		Object instance;
 
-		instance.GetComponent<C_Tag>()->Set(ENEMY_TAG);
+		instance.AddComponent<C_Health>()->SetCurrent(std::rand() % 41 + 80);
+		instance.AddComponent<C_Attack>()->SetValue(std::rand() % 5 + 6);
+		instance.AddComponent<C_Defense>()->SetValue(std::rand() % 5 + 6);
+		instance.AddComponent<C_Strength>()->SetValue(std::rand() % 5 + 6);
+		instance.AddComponent<C_Dexterity>()->SetValue(std::rand() % 5 + 6);
+		instance.AddComponent<C_Stamina>()->SetValue(std::rand() % 5 + 6);
+		instance.AddComponent<C_Mana>();
 		instance.AddComponent<C_Movement>();
 		instance.AddComponent<C_AnimatedSprite>();
+		auto animation = instance.AddComponent<C_DirectionalAnimation>();
+
+		instance.GetComponent<C_Tag>()->Set(ENEMY_TAG);
 		instance.AddComponent<C_SpawnItemsOnDeath>();
 		instance.AddComponent<C_PlaySoundOnDeath>();
 		instance.AddComponent<C_Pathfinding>();
-		instance.GetComponent<C_Health>()->SetCurrent(std::rand() % 41 + 80);
-		instance.GetComponent<C_Attack>()->SetValue(std::rand() % 5 + 6);
-		instance.GetComponent<C_Defense>()->SetValue(std::rand() % 5 + 6);
-		instance.GetComponent<C_Strength>()->SetValue(std::rand() % 5 + 6);
-		instance.GetComponent<C_Dexterity>()->SetValue(std::rand() % 5 + 6);
-		instance.GetComponent<C_Stamina>()->SetValue(std::rand() % 5 + 6);
+		instance.AddComponent<C_DistanceBasedCollision>();
+		
+		
 
+		/*
 		auto dmg = instance.AddComponent<C_CollisionDamage>();
 		dmg->SetDamageAmount(10);
 		dmg->SetTargetTag(PLAYER_TAG);
 		dmg->SetSoundOnHit(&m_playerHitSound);
+		*/
 
 		// Generate a humanoid type. (Skeleton or Goblin)
 		HUMANOID humanoidType = static_cast<HUMANOID>(rand() % static_cast<int>(HUMANOID::COUNT));
@@ -122,23 +134,21 @@ std::unique_ptr<Entity> EntityFactory::Create(ENEMY type, SharedContext* context
 		}
 
 		// Load textures.
-		instance.m_textureIDs[static_cast<int>(ANIMATION_STATE::WALK_UP)] = TextureManager::AddTexture("../resources/enemies/" + enemyName + "/spr_" + enemyName + "_walk_up.png");
-		instance.m_textureIDs[static_cast<int>(ANIMATION_STATE::WALK_DOWN)] = TextureManager::AddTexture("../resources/enemies/" + enemyName + "/spr_" + enemyName + "_walk_down.png");
-		instance.m_textureIDs[static_cast<int>(ANIMATION_STATE::WALK_RIGHT)] = TextureManager::AddTexture("../resources/enemies/" + enemyName + "/spr_" + enemyName + "_walk_right.png");
-		instance.m_textureIDs[static_cast<int>(ANIMATION_STATE::WALK_LEFT)] = TextureManager::AddTexture("../resources/enemies/" + enemyName + "/spr_" + enemyName + "_walk_left.png");
-		instance.m_textureIDs[static_cast<int>(ANIMATION_STATE::IDLE_UP)] = TextureManager::AddTexture("../resources/enemies/" + enemyName + "/spr_" + enemyName + "_idle_up.png");
-		instance.m_textureIDs[static_cast<int>(ANIMATION_STATE::IDLE_DOWN)] = TextureManager::AddTexture("../resources/enemies/" + enemyName + "/spr_" + enemyName + "_idle_down.png");
-		instance.m_textureIDs[static_cast<int>(ANIMATION_STATE::IDLE_RIGHT)] = TextureManager::AddTexture("../resources/enemies/" + enemyName + "/spr_" + enemyName + "_idle_right.png");
-		instance.m_textureIDs[static_cast<int>(ANIMATION_STATE::IDLE_LEFT)] = TextureManager::AddTexture("../resources/enemies/" + enemyName + "/spr_" + enemyName + "_idle_left.png");
+		std::array<int, static_cast<int>(ANIMATION_STATE::COUNT)> textureIDs;
+		textureIDs[static_cast<int>(ANIMATION_STATE::WALK_UP)] = TextureManager::AddTexture("../resources/enemies/" + enemyName + "/spr_" + enemyName + "_walk_up.png");
+		textureIDs[static_cast<int>(ANIMATION_STATE::WALK_DOWN)] = TextureManager::AddTexture("../resources/enemies/" + enemyName + "/spr_" + enemyName + "_walk_down.png");
+		textureIDs[static_cast<int>(ANIMATION_STATE::WALK_RIGHT)] = TextureManager::AddTexture("../resources/enemies/" + enemyName + "/spr_" + enemyName + "_walk_right.png");
+		textureIDs[static_cast<int>(ANIMATION_STATE::WALK_LEFT)] = TextureManager::AddTexture("../resources/enemies/" + enemyName + "/spr_" + enemyName + "_walk_left.png");
+		textureIDs[static_cast<int>(ANIMATION_STATE::IDLE_UP)] = TextureManager::AddTexture("../resources/enemies/" + enemyName + "/spr_" + enemyName + "_idle_up.png");
+		textureIDs[static_cast<int>(ANIMATION_STATE::IDLE_DOWN)] = TextureManager::AddTexture("../resources/enemies/" + enemyName + "/spr_" + enemyName + "_idle_down.png");
+		textureIDs[static_cast<int>(ANIMATION_STATE::IDLE_RIGHT)] = TextureManager::AddTexture("../resources/enemies/" + enemyName + "/spr_" + enemyName + "_idle_right.png");
+		textureIDs[static_cast<int>(ANIMATION_STATE::IDLE_LEFT)] = TextureManager::AddTexture("../resources/enemies/" + enemyName + "/spr_" + enemyName + "_idle_left.png");
+		animation->SetTextures(textureIDs);
 
 		// Set initial sprite.
-		instance.GetComponent<C_AnimatedSprite>()->SetSprite(TextureManager::GetTexture(instance.m_textureIDs[static_cast<int>(ANIMATION_STATE::WALK_UP)]), false, 8, 12);
+		//problem below:
+		instance.GetComponent<C_AnimatedSprite>()->SetSprite(TextureManager::GetTexture(textureIDs[static_cast<int>(ANIMATION_STATE::IDLE_DOWN)]), false, 8, 12);
 
-		// Copy textures.
-		for (int i = 0; i < static_cast<int>(ANIMATION_STATE::COUNT); i++)
-		{
-			instance.m_textures[i] = TextureManager::GetTexture(instance.m_textureIDs[i]);
-		}
 
 		// Generate armor.
 		// Create arrays of textures for our armor, and the final versions.
@@ -150,7 +160,8 @@ std::unique_ptr<Entity> EntityFactory::Create(ENEMY type, SharedContext* context
 		// Setup all render textures.
 		for (int i = 0; i < static_cast<int>(ANIMATION_STATE::COUNT); i++)
 		{
-			sf::Vector2u textureSize = instance.m_textures[i].getSize();
+			sf::Vector2u textureSize = TextureManager::GetTexture(animation->m_textureIDs[i]).getSize();
+			//sf::Vector2u textureSize = instance.m_textures[i].getSize();
 
 			armorTextures[i].create(textureSize.x, textureSize.y);
 			finalTextures[i].create(textureSize.x, textureSize.y);
@@ -317,7 +328,9 @@ std::unique_ptr<Entity> EntityFactory::Create(ENEMY type, SharedContext* context
 			sf::Sprite baseSprite, armorSprite;
 
 			// Draw the default texture.
-			baseSprite.setTexture(instance.m_textures[i]);
+			baseSprite.setTexture(TextureManager::GetTexture(animation->m_textureIDs[i]));
+			//baseSprite.setTexture(instance.m_textures[i]);
+			
 			finalTextures[i].draw(baseSprite);
 
 			// Draw armor on top.
@@ -329,10 +342,11 @@ std::unique_ptr<Entity> EntityFactory::Create(ENEMY type, SharedContext* context
 			img.flipVertically();
 
 			// Store the resulting texture.
-			instance.m_textures[i].loadFromImage(img);
+			TextureManager::GetTexture(animation->m_textureIDs[i]).loadFromImage(img);
+			//instance.m_textures[i].loadFromImage(img);
 		}
 
-		return std::make_unique<Humanoid>(instance);
+		return std::make_unique<Object>(instance);
 
 		break;
 	}
